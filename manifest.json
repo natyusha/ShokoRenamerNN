@@ -1,0 +1,17 @@
+{
+    "$schema": "https://raw.githubusercontent.com/ShokoAnime/ShokoServer/master/Shoko.BuildTools/manifest.schema.json",
+    "id": "8b3d64c1-6b45-4b8a-9e7f-1d2a3b4c5d6e",
+    "name": "Shoko Renamer NN",
+    "overview": "A custom renamer plugin for Shoko Server which uses a strict AniDB only naming scheme within a flat folder structure.",
+    "authors": "natyusha",
+    "repository_url": "https://github.com/natyusha/ShokoRenamerNN",
+    "tags": [
+      "relocation-provider",
+      "strict",
+      "anidb"
+    ],
+    "thumbnail_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-logo.png",
+    "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
+    "releases": []
+}
+  

@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RepositoryUrl>https://github.com/natyusha/ShokoRenamerNN</RepositoryUrl>
+    <PackageTags>relocation-provider, renamer</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Title>Shoko Renamer NN</Title>
+    <Authors>natyusha</Authors>
+
+    <VersionRegex>Version\s*=\s*"([^"]+)"</VersionRegex>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <ShokoRenamerNNConstantsFile>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/ShokoRenamerNNConstants.cs'))</ShokoRenamerNNConstantsFile>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($(ShokoRenamerNNConstantsFile), $(VersionRegex)).Groups[1].Value)</Version>
+
+    <ReleaseChannel Condition="'$(RELEASE_CHANNEL)' != ''">$(RELEASE_CHANNEL)</ReleaseChannel>
+    <ReleaseChannel Condition="'$(RELEASE_CHANNEL)' == ''">Dev</ReleaseChannel>
+
+    <!-- Default to Stable (0) and If the Release Channel is Dev (set via GitHub Actions), use revision 1 to trigger Shoko's Dev Channel detection -->
+    <BuildRevision>0</BuildRevision>
+    <BuildRevision Condition="'$(ReleaseChannel)' == 'Dev'">1</BuildRevision>
+
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
+    <FileVersion>$(Version).0</FileVersion>
+    <InformationalVersion Condition="'$(BuildRevision)' == '1'">$(Version)-dev.1</InformationalVersion>
+  </PropertyGroup>
+
+  <!-- Embed Identity Metadata manually to satisfy Shoko Server's pre-load checks -->
+  <ItemGroup>
+    <AssemblyMetadata Include="PackageID" Value="8b3d64c1-6b45-4b8a-9e7f-1d2a3b4c5d6e" />
+    <AssemblyMetadata Include="PackageName" Value="$(Title)" />
+    <AssemblyMetadata Include="PackageOverview" Value="A custom renamer plugin for Shoko Server which uses a strict AniDB only naming scheme within a flat folder structure." />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shoko.Abstractions" Version="6.0.0-alpha.97" ExcludeAssets="runtime" />
+    <PackageReference Include="NLog" Version="6.1.4" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <Target Name="PluginAssemblyVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo" Condition="Exists('../.git') And '$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup Condition="$(OS) == 'Windows_NT'">
+      <GitDateFormat>%%aI</GitDateFormat>
+      <NullStdErr>NUL</NullStdErr>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(OS) != 'Windows_NT'">
+      <GitDateFormat>%aI</GitDateFormat>
+      <NullStdErr>/dev/null</NullStdErr>
+    </PropertyGroup>
+    <Exec Command="git log -1 --format=$(GitDateFormat)" ConsoleToMsBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitAuthorDateRaw" />
+    </Exec>
+    <Exec Command="git rev-parse HEAD" ConsoleToMsBuild="true" StandardOutputImportance="Low">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitCommitRaw" />
+    </Exec>
+    <Exec Command="git describe --exact-match --tags --match &quot;v[0-9]*.[0-9]*.[0-9]*&quot; 2>$(NullStdErr)" ConsoleToMsBuild="true" StandardOutputImportance="Low" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitTagRaw" />
+    </Exec>
+    <PropertyGroup>
+      <ReleaseDate>$([System.String]::Copy('$(_GitAuthorDateRaw)').Trim())</ReleaseDate>
+      <SourceRevision>$([System.String]::Copy('$(_GitCommitRaw)').Trim())</SourceRevision>
+      <ReleaseTag>$([System.String]::Copy('$(_GitTagRaw)').Trim())</ReleaseTag>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" Condition="'$(RuntimeIdentifier)' != ''" />
+      <AssemblyMetadata Include="ReleaseChannel" Value="$(ReleaseChannel)" />
+      <AssemblyMetadata Include="ReleaseDate" Value="$(ReleaseDate)" Condition="'$(ReleaseDate)' != ''" />
+      <AssemblyMetadata Include="ReleaseTag" Value="$(ReleaseTag)" Condition="'$(ReleaseTag)' != ''" />
+      <AssemblyMetadata Include="SourceRevision" Value="$(SourceRevision)" Condition="'$(SourceRevision)' != ''" />
+    </ItemGroup>
+  </Target>
+</Project>
