@@ -52,7 +52,7 @@ public class RenamerConfig : IRelocationProviderConfiguration, IConfigurationWit
     [Visibility(Size = DisplayElementSize.Full)]
     public string Script { get; set; } =
         "### Shoko Renamer NN Overrides ###\n\n"
-        + "# AniDB IDs (Series or Episode) semicolon delimited, Title, Episode Number (Only If Episode)\n"
+        + "# AniDB IDs (Series or Episode) semicolon delimited, Title, Episode Number (Only if Episode)\n"
         + "2840;2841,Akahori Gedou Hour Rabuge\n"
         + "147453,Toriko (2011),099\n";
 
