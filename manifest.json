@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.0.2",
+      "tag": "v1.0.2",
+      "source_revision": "e2a80aa1c4c18f0ec5c9909a85fe444e752902d8",
+      "released_at": "2026-10-02T23:47:14Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Update Icon\r\n- Extract plugin identity metadata from constants in project file\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.0.1...v1.0.2",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.2/ShokoRenamerNN-v1.0.2_linux-arm64.zip",
+          "checksum": "sha256:ce0b36b940efa745d3a4c4c9848bbde41b7c3519081dccff028be590acaa5b39"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.2/ShokoRenamerNN-v1.0.2_linux-x64.zip",
+          "checksum": "sha256:f186bef765b80e048312ea5607fb9e02f2e5bc4fb37c473bd6eb0726e5ef3e54"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.2/ShokoRenamerNN-v1.0.2_win-x64.zip",
+          "checksum": "sha256:a8c33e8e65a2461d02815957937fbcd111a9f068f1325abb53e23a0c4c04c9d0"
+        }
+      ]
+    },
+    {
       "version": "1.0.1",
       "tag": "v1.0.1",
       "source_revision": "cdafa5508e06b62bf7ccb8217703bd31c37ce5b0",
