@@ -13,13 +13,18 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Title>Shoko Renamer NN</Title>
     <Authors>natyusha</Authors>
 
+    <NameRegex>Name\s*=\s*"([^"]+)"</NameRegex>
     <VersionRegex>Version\s*=\s*"([^"]+)"</VersionRegex>
+    <DescriptionRegex>Description\s*=\s*"([^"]+)"</DescriptionRegex>
+    <PluginIdRegex>PluginId\s*=\s*"([^"]+)"</PluginIdRegex>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <ShokoRenamerNNConstantsFile>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/ShokoRenamerNNConstants.cs'))</ShokoRenamerNNConstantsFile>
+    <Title>$([System.Text.RegularExpressions.Regex]::Match($(ShokoRenamerNNConstantsFile), $(NameRegex)).Groups[1].Value)</Title>
     <Version>$([System.Text.RegularExpressions.Regex]::Match($(ShokoRenamerNNConstantsFile), $(VersionRegex)).Groups[1].Value)</Version>
+    <Description>$([System.Text.RegularExpressions.Regex]::Match($(ShokoRenamerNNConstantsFile), $(DescriptionRegex)).Groups[1].Value)</Description>
+    <PluginId>$([System.Text.RegularExpressions.Regex]::Match($(ShokoRenamerNNConstantsFile), $(PluginIdRegex)).Groups[1].Value)</PluginId>
 
     <ReleaseChannel Condition="'$(RELEASE_CHANNEL)' != ''">$(RELEASE_CHANNEL)</ReleaseChannel>
     <ReleaseChannel Condition="'$(RELEASE_CHANNEL)' == ''">Dev</ReleaseChannel>
@@ -35,9 +40,9 @@
 
   <!-- Embed Identity Metadata manually to satisfy Shoko Server's pre-load checks -->
   <ItemGroup>
-    <AssemblyMetadata Include="PackageID" Value="8b3d64c1-6b45-4b8a-9e7f-1d2a3b4c5d6e" />
+    <AssemblyMetadata Include="PackageID" Value="$(PluginId)" />
     <AssemblyMetadata Include="PackageName" Value="$(Title)" />
-    <AssemblyMetadata Include="PackageOverview" Value="A custom renamer plugin for Shoko Server which uses a strict AniDB only naming scheme within a flat folder structure." />
+    <AssemblyMetadata Include="PackageOverview" Value="$(Description)" />
   </ItemGroup>
 
   <ItemGroup>
