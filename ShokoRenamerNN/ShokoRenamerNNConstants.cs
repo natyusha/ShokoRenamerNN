@@ -10,7 +10,7 @@ public static class ShokoRenamerNNConstants
     public const string Description = "A custom renamer plugin for Shoko Server which uses a strict AniDB only naming scheme within a flat folder structure.";
 
     /// <summary>Current version string.</summary>
-    public const string Version = "1.0.0";
+    public const string Version = "1.0.1";
 
     /// <summary>Unique plugin ID used for configuration storage.</summary>
     public const string PluginId = "8b3d64c1-6b45-4b8a-9e7f-1d2a3b4c5d6e";

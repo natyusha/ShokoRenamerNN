@@ -45,6 +45,13 @@
     <PackageReference Include="NLog" Version="6.1.4" ExcludeAssets="runtime" />
   </ItemGroup>
 
+  <!-- Embed the plugin images for Shoko's WebUI -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets/shoko-renamer-nn-logo.png;Assets/shoko-renamer-nn-icon.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <Target Name="PluginAssemblyVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo" Condition="Exists('../.git') And '$(DesignTimeBuild)' != 'true'">
     <PropertyGroup Condition="$(OS) == 'Windows_NT'">
       <GitDateFormat>%%aI</GitDateFormat>
