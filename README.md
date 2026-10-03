@@ -10,14 +10,6 @@
 
 This is a custom renamer plugin for [Shoko Server](https://shokoanime.com/) which uses a strict AniDB only naming scheme within a flat folder structure.
 
-Files will be organized and named as follows:
-`{destination}/{folderName}/{title} - {epNumber}{fileTags}.{extension}`
-
-- `destination`: Automatically routed to your configured `Main Folder Name` or `18 Restricted Folder Name`
-- `folderName`: Formatted series title with common prefixes (such as `OVA` or `Gekijouban`) shifted to the end after an em dash (`—`)
-- `epNumber`: Naturally padded episode numbers, including range formatting, relation indicators (e.g., `O1 (E01)`), or single-entry title replacements
-- `fileTags`: Optional preserved release tags from the source file (e.g., ` [uncen]`, ` [raw]`)
-
 ## Installation
 
 Installation can be completed via Shoko's WebUI (Recommended) or Manually. Both methods are detailed below:
@@ -42,3 +34,25 @@ Installation can be completed via Shoko's WebUI (Recommended) or Manually. Both 
 3. Give the preset an appropriate name, then click `Save`
 4. With the new preset selected make sure to configure the "Main Folder Name" and "18 Restricted Folder Name"
 5. Disable any of the advanced formatting or overrides that aren't desired, then click `Save`
+
+## File Naming
+
+Files will be organized and named as follows:
+
+`{destination}/{folderName}/{title} - {epNumber}{fileTags}.{extension}`
+
+- `destination`: Automatically routed to the configured `Main Folder Name` or `18 Restricted Folder Name`
+  - The names should exactly match a managed folder in Shoko
+- `folderName`: Formatted `title` with common prefixes shifted to the end after an em dash (`—`)
+  - Common prefixes include things like: `OVA` or `Gekijouban`
+- `title`: The "Main" series title on AniDB
+  - This is the romanised version of an anime's original language official title
+- `epNumber`: Padded episode numbers with range formatting, relation indicators, or single-entry titles
+  - Relation indicators will be appended in parenthesis like so: `O1 (E01)`
+  - Single-entry titles will replace the episode number like so: `(Complete Movie)`
+- `fileTags`: Optional preserved release tags from the source file
+  - Release tags include things like: `[uncen]` or `[raw]`
+- `extension`: The file extension
+
+> [!NOTE]
+> Appending common prefixes, using single-entry titles, and preserving release tags can all be disabled in the settings if desired.
