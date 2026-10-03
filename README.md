@@ -45,8 +45,8 @@ Files will be organized and named as follows:
   - The names should exactly match a managed folder in Shoko
 - `folderName`: Formatted `title` with common prefixes shifted to the end after an em dash (`—`)
   - Common prefixes include things like: `OVA` or `Gekijouban`
-- `title`: The "Main" series title on AniDB
-  - This is the romanised version of an anime's original language official title
+- `title`: The preferred series title as reported by Shoko
+  - This works best when configured as `x-main`: (the romanised version of an anime's original language official title)
 - `epNumber`: Padded episode numbers with range formatting, relation indicators, or single-entry titles
   - Relation indicators will be appended in parenthesis like so: `O1 (E01)`
   - Single-entry titles will replace the episode number like so: `(Complete Movie)`
