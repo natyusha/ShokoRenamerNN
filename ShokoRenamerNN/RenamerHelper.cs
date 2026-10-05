@@ -2,6 +2,7 @@ using System.Collections.Frozen;
 using System.Text.RegularExpressions;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Shoko;
+using Shoko.Abstractions.Video.Services;
 
 namespace ShokoRenamerNN;
 
@@ -48,9 +49,6 @@ public static partial class RenamerHelper
 
     /// <summary>Mapping of stylistic text replacements.</summary>
     private static readonly (string Find, string Replace)[] s_styledReplacements = [("1/2", "½"), ("1/6", "⅙"), ("-->", "→"), ("<--", "←"), ("->", "→"), ("<-", "←")];
-
-    /// <summary>Set of extensions considered as video files to determine if a directory is empty of videos.</summary>
-    private static readonly FrozenSet<string> s_videoExtensions = ((string[])[".mkv", ".mp4", ".avi", ".m4v", ".ogm", ".wmv", ".mpg", ".mpeg", ".flv"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Set of extensions considered as image files for series-level sidecars.</summary>
     private static readonly FrozenSet<string> s_imageExtensions = ((string[])[".bmp", ".gif", ".jpe", ".jpeg", ".jpg", ".png", ".tbn", ".tif", ".tiff", ".webp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
@@ -256,7 +254,8 @@ public static partial class RenamerHelper
     /// <summary>Moves associated sidecar files, images, and attachment folders when a file is relocated.</summary>
     /// <param name="srcPath">The original full path of the file.</param>
     /// <param name="destPath">The new full path of the file.</param>
-    public static void RelocateSidecars(string srcPath, string destPath)
+    /// <param name="videoService">The video service injected from Shoko.</param>
+    public static void RelocateSidecars(string srcPath, string destPath, IVideoService videoService)
     {
         if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath) || !File.Exists(srcPath))
             return;
@@ -289,7 +288,7 @@ public static partial class RenamerHelper
                 MoveFileSafely(entry, Path.Combine(destDir, destBase + Path.GetExtension(entry)));
         }
 
-        if (!Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && s_videoExtensions.Contains(Path.GetExtension(f))))
+        if (!Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && videoService.IsAllowedVideoExtension(f)))
             foreach (var file in Directory.EnumerateFiles(srcDir))
             {
                 string name = Path.GetFileName(file);

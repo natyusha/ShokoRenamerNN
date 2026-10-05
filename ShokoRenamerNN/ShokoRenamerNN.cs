@@ -4,6 +4,7 @@ using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
 using Shoko.Abstractions.Video.Enums;
 using Shoko.Abstractions.Video.Relocation;
+using Shoko.Abstractions.Video.Services;
 
 namespace ShokoRenamerNN;
 
@@ -30,7 +31,8 @@ public class Plugin : IPlugin
 }
 
 /// <summary>A C# relocation provider acting as a direct replacement for LuaRenamer scripts.</summary>
-public class ShokoRenamer : IRelocationProvider<RenamerConfig>
+/// <param name="videoService">Shoko video service for extension checking.</param>
+public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<RenamerConfig>
 {
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
@@ -109,7 +111,7 @@ public class ShokoRenamer : IRelocationProvider<RenamerConfig>
                         string destDir = result.ManagedFolder?.Path ?? Path.GetDirectoryName(srcPath) ?? string.Empty;
 
                         if (!string.IsNullOrWhiteSpace(srcPath))
-                            RenamerHelper.RelocateSidecars(srcPath, Path.Combine(destDir, result.Path ?? string.Empty, result.FileName ?? context.File.FileName));
+                            RenamerHelper.RelocateSidecars(srcPath, Path.Combine(destDir, result.Path ?? string.Empty, result.FileName ?? context.File.FileName), videoService);
                     }
                     catch
                     { /* Ignore missing properties or IO errors during sidecar relocation */
