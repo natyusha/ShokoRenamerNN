@@ -256,15 +256,32 @@ public static partial class RenamerHelper
 
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
-    /// <summary>Checks whether a file path corresponds to a video recognized and matched by Shoko.</summary>
+    /// <summary>Checks whether a video record is flagged as ignored in Shoko.</summary>
+    /// <param name="video">The video model to inspect.</param>
+    /// <returns>True if the video is marked as ignored; otherwise, false.</returns>
+    private static bool IsIgnored(IVideo video)
+    {
+        var prop = video.GetType().GetProperty("IsIgnored") ?? video.GetType().GetProperty("Ignored");
+        return prop != null
+            && prop.GetValue(video) switch
+            {
+                bool b => b,
+                int i => i != 0,
+                long l => l != 0,
+                _ => false,
+            };
+    }
+
+    /// <summary>Checks whether a file path corresponds to an active recognized episode video in Shoko that is not marked as ignored.</summary>
     /// <param name="filePath">The absolute path to the file.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
-    /// <returns>True if the file is tracked by Shoko and has at least one episode cross-reference; otherwise, false.</returns>
+    /// <returns>True if the file is tracked by Shoko, has at least one episode cross-reference, and is not ignored; otherwise, false.</returns>
     private static bool IsMatchedVideo(string filePath, IVideoService videoService)
     {
         try
         {
-            return videoService.GetVideoFileByAbsolutePath(Path.GetFullPath(filePath)) is { Video.CrossReferences.Count: > 0 };
+            var file = videoService.GetVideoFileByAbsolutePath(Path.GetFullPath(filePath));
+            return file?.Video is { CrossReferences.Count: > 0 } video && !IsIgnored(video);
         }
         catch
         {
@@ -272,15 +289,15 @@ public static partial class RenamerHelper
         }
     }
 
-    /// <summary>Checks whether a folder contains any video files recognized and matched by Shoko.</summary>
+    /// <summary>Checks whether a folder contains any active episode videos recognized and matched by Shoko.</summary>
     /// <param name="dir">The absolute directory path to scan.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
-    /// <returns>True if any file within the directory is matched by Shoko; otherwise, false.</returns>
+    /// <returns>True if any file within the directory is an active recognized episode video; otherwise, false.</returns>
     private static bool ContainsMatchedVideos(string dir, IVideoService videoService)
     {
         try
         {
-            return Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Any(f => videoService.IsAllowedVideoExtension(f) && IsMatchedVideo(f, videoService));
+            return Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Any(f => IsMatchedVideo(f, videoService));
         }
         catch
         {
@@ -347,10 +364,10 @@ public static partial class RenamerHelper
             bool canMoveLoose = !srcDir.Equals(destDir, cmp) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
             if (canMoveLoose && Directory.Exists(srcDir))
             {
-                bool hasOtherVideos = Directory
+                bool hasOtherMatchedVideos = Directory
                     .EnumerateFiles(srcDir)
-                    .Any(f => !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && videoService.IsAllowedVideoExtension(f));
-                if (!hasOtherVideos)
+                    .Any(f => !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && IsMatchedVideo(f, videoService));
+                if (!hasOtherMatchedVideos)
                 {
                     foreach (var dir in Directory.EnumerateDirectories(srcDir))
                     {
@@ -364,7 +381,7 @@ public static partial class RenamerHelper
 
                     foreach (var file in Directory.EnumerateFiles(srcDir))
                     {
-                        if (Path.GetFullPath(file).Equals(cleanSrcPath, cmp) || Path.GetFullPath(file).Equals(cleanDestPath, cmp) || videoService.IsAllowedVideoExtension(file))
+                        if (Path.GetFullPath(file).Equals(cleanSrcPath, cmp) || Path.GetFullPath(file).Equals(cleanDestPath, cmp) || IsMatchedVideo(file, videoService))
                             continue;
 
                         string target = Path.Combine(destDir, Path.GetFileName(file));
