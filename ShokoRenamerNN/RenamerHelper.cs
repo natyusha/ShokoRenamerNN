@@ -256,18 +256,6 @@ public static partial class RenamerHelper
 
     private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
 
-    /// <summary>Checks whether a video record is flagged as ignored in Shoko.</summary>
-    /// <param name="video">The video model to inspect.</param>
-    /// <returns>True if the video is marked as ignored; otherwise, false.</returns>
-    private static bool IsIgnored(IVideo video) =>
-        (video.GetType().GetProperty("IsIgnored") ?? video.GetType().GetProperty("Ignored"))?.GetValue(video) switch
-        {
-            bool b => b,
-            int i => i != 0,
-            long l => l != 0,
-            _ => false,
-        };
-
     /// <summary>Checks whether a video file exists in Shoko and is explicitly flagged as ignored.</summary>
     /// <param name="filePath">The absolute path to the file.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
@@ -276,7 +264,7 @@ public static partial class RenamerHelper
     {
         try
         {
-            return videoService.GetVideoFileByAbsolutePath(Path.GetFullPath(filePath))?.Video is { } video && IsIgnored(video);
+            return videoService.GetVideoFileByAbsolutePath(Path.GetFullPath(filePath))?.Video?.IsIgnored == true;
         }
         catch
         {
@@ -284,16 +272,32 @@ public static partial class RenamerHelper
         }
     }
 
-    /// <summary>Checks whether a folder contains any active, unignored episode videos recognized by Shoko.</summary>
+    /// <summary>Checks whether a file path corresponds to an active, unignored episode video matched in Shoko.</summary>
+    /// <param name="filePath">The absolute path to the file.</param>
+    /// <param name="videoService">The video service injected from Shoko.</param>
+    /// <returns>True if the file is tracked by Shoko, matched to an episode, and not marked as ignored; otherwise, false.</returns>
+    private static bool IsMatchedActiveEpisode(string filePath, IVideoService videoService)
+    {
+        try
+        {
+            return videoService.GetVideoFileByAbsolutePath(Path.GetFullPath(filePath))?.Video is { CrossReferences.Count: > 0, IsIgnored: false };
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Checks whether a folder contains any active episode videos matched and unignored by Shoko.</summary>
     /// <param name="dir">The absolute directory path to scan.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
-    /// <returns>True if any file within the directory is an active episode video; otherwise, false.</returns>
+    /// <returns>True if any file within the directory is an active matched episode; otherwise, false.</returns>
     private static bool ContainsActiveVideos(string dir, IVideoService videoService)
     {
         try
         {
             var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true };
-            return Directory.EnumerateFiles(dir, "*", options).Any(f => videoService.IsAllowedVideoExtension(f) && !IsIgnoredVideo(f, videoService));
+            return Directory.EnumerateFiles(dir, "*", options).Any(f => IsMatchedActiveEpisode(f, videoService));
         }
         catch
         {
