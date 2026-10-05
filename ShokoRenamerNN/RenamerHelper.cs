@@ -1,5 +1,6 @@
 using System.Collections.Frozen;
 using System.Text.RegularExpressions;
+using NLog;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Video.Services;
@@ -251,75 +252,157 @@ public static partial class RenamerHelper
 
     #region Relocation Helpers
 
+    private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
+
     /// <summary>Moves associated sidecar files, images, and attachment folders when a file is relocated.</summary>
     /// <param name="srcPath">The original full path of the file.</param>
     /// <param name="destPath">The new full path of the file.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
     public static void RelocateSidecars(string srcPath, string destPath, IVideoService videoService)
     {
-        if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath) || !File.Exists(srcPath))
+        if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath))
             return;
 
         string srcDir = Path.GetDirectoryName(srcPath)!;
         string destDir = Path.GetDirectoryName(destPath)!;
-        if (srcDir.Equals(destDir, StringComparison.OrdinalIgnoreCase))
+        if (!Directory.Exists(srcDir))
             return;
 
         string srcBase = Path.GetFileNameWithoutExtension(srcPath);
         string destBase = Path.GetFileNameWithoutExtension(destPath);
         var cmp = StringComparison.OrdinalIgnoreCase;
 
+        if (srcDir.Equals(destDir, cmp) && srcBase.Equals(destBase, cmp))
+            return;
         if (!Directory.Exists(destDir))
             Directory.CreateDirectory(destDir);
 
+        // Episode-level sidecars and attachment folders
         foreach (var entry in Directory.EnumerateFileSystemEntries(srcDir, srcBase + "*"))
         {
-            if (entry.Equals(srcPath, cmp))
+            if (entry.Equals(srcPath, cmp) || entry.Equals(destPath, cmp))
                 continue;
 
             string name = Path.GetFileName(entry);
-            if (Directory.Exists(entry))
+            bool isDir = Directory.Exists(entry);
+            string suffix = name[srcBase.Length..];
+
+            if (isDir)
             {
-                string suffix = name[srcBase.Length..];
                 if (s_attachFolderSuffixes.Contains(suffix))
-                    MoveDirectorySafely(entry, Path.Combine(destDir, destBase + suffix));
+                {
+                    string target = Path.Combine(destDir, destBase + suffix);
+                    MoveDirectorySafely(entry, target);
+                    s_logger.Info("Shoko Renamer NN: Relocated attachment folder -> \"{Old}\" to \"{New}\"", name, target);
+                }
             }
-            else if (s_sidecarExtensions.Contains(Path.GetExtension(entry)))
-                MoveFileSafely(entry, Path.Combine(destDir, destBase + Path.GetExtension(entry)));
+            else
+            {
+                string ext = Path.GetExtension(entry);
+                if (s_sidecarExtensions.Contains(ext))
+                {
+                    string target = Path.Combine(destDir, destBase + suffix);
+                    MoveFileSafely(entry, target);
+                    s_logger.Info("Shoko Renamer NN: Relocated sidecar file -> \"{Old}\" to \"{New}\"", name, target);
+                }
+            }
         }
 
-        if (!Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && videoService.IsAllowedVideoExtension(f)))
-            foreach (var file in Directory.EnumerateFiles(srcDir))
+        // Series-level sidecars (Theme.mp3, loose images) when moving to a new folder
+        if (!srcDir.Equals(destDir, cmp))
+        {
+            bool hasOtherVideos = Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && !f.Equals(destPath, cmp) && videoService.IsAllowedVideoExtension(f));
+            if (!hasOtherVideos)
             {
-                string name = Path.GetFileName(file);
-                if (name.Equals("Theme.mp3", cmp) || s_imageExtensions.Contains(Path.GetExtension(file)))
-                    MoveFileSafely(file, Path.Combine(destDir, name));
+                foreach (var file in Directory.EnumerateFiles(srcDir))
+                {
+                    string name = Path.GetFileName(file);
+                    string ext = Path.GetExtension(file);
+
+                    if (name.Equals("Theme.mp3", cmp))
+                    {
+                        string target = Path.Combine(destDir, name);
+                        MoveFileSafely(file, target);
+                        s_logger.Info("Shoko Renamer NN: Relocated series audio -> \"{Old}\" to \"{New}\"", name, target);
+                    }
+                    else if (s_imageExtensions.Contains(ext))
+                    {
+                        string target = Path.Combine(destDir, name);
+                        MoveFileSafely(file, target);
+                        s_logger.Info("Shoko Renamer NN: Relocated series image -> \"{Old}\" to \"{New}\"", name, target);
+                    }
+                }
+
+                CleanEmptyDirectories(srcDir);
             }
+        }
     }
 
-    /// <summary>Safely moves a file, catching and ignoring any exceptions.</summary>
+    /// <summary>Safely moves a file, replacing the destination if it already exists.</summary>
+    /// <param name="src">The source file path.</param>
+    /// <param name="dest">The destination file path.</param>
     private static void MoveFileSafely(string src, string dest)
     {
         try
         {
-            if (!File.Exists(dest))
-                File.Move(src, dest);
+            if (File.Exists(dest))
+                File.Delete(dest);
+            File.Move(src, dest);
         }
-        catch
-        { /* Ignore */
+        catch (Exception ex)
+        {
+            s_logger.Warn(ex, "Shoko Renamer NN: Failed to move file -> \"{Source}\" to \"{Destination}\"", src, dest);
         }
     }
 
-    /// <summary>Safely moves a directory, catching and ignoring any exceptions.</summary>
+    /// <summary>Safely moves or merges a directory into a destination, replacing conflicting files.</summary>
+    /// <param name="src">The source directory path.</param>
+    /// <param name="dest">The destination directory path.</param>
     private static void MoveDirectorySafely(string src, string dest)
     {
         try
         {
             if (!Directory.Exists(dest))
+            {
                 Directory.Move(src, dest);
+                return;
+            }
+
+            foreach (var file in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
+            {
+                string rel = Path.GetRelativePath(src, file);
+                string target = Path.Combine(dest, rel);
+                string? dir = Path.GetDirectoryName(target);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+                if (File.Exists(target))
+                    File.Delete(target);
+                File.Move(file, target);
+            }
+            Directory.Delete(src, true);
         }
-        catch
-        { /* Ignore */
+        catch (Exception ex)
+        {
+            s_logger.Warn(ex, "Shoko Renamer NN: Failed to move directory -> \"{Source}\" to \"{Destination}\"", src, dest);
+        }
+    }
+
+    /// <summary>Recursively deletes empty directories starting from the target directory upwards.</summary>
+    /// <param name="dir">The directory to delete if empty.</param>
+    private static void CleanEmptyDirectories(string dir)
+    {
+        try
+        {
+            while (!string.IsNullOrEmpty(dir) && Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
+            {
+                Directory.Delete(dir, false);
+                s_logger.Info("Shoko Renamer NN: Cleaned up empty folder -> \"{Directory}\"", dir);
+                dir = Path.GetDirectoryName(dir)!;
+            }
+        }
+        catch (Exception ex)
+        {
+            s_logger.Debug(ex, "Shoko Renamer NN: Could not remove directory -> \"{Directory}\"", dir);
         }
     }
 

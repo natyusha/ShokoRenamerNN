@@ -1,4 +1,3 @@
-using System.Reflection;
 using NLog;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
@@ -97,26 +96,37 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
             }
 
             if (context.MoveEnabled || context.RenameEnabled)
-                _ = Task.Run(async () =>
-                {
-                    try
+            {
+                string srcPath = context.File.Path;
+                string destDir = context.MoveEnabled && result.ManagedFolder != null ? Path.Combine(result.ManagedFolder.Path, result.Path ?? string.Empty) : Path.GetDirectoryName(srcPath) ?? string.Empty;
+                string destFileName = context.RenameEnabled && !string.IsNullOrWhiteSpace(result.FileName) ? result.FileName : Path.GetFileName(srcPath);
+                string destPath = Path.Combine(destDir, destFileName);
+
+                if (!srcPath.Equals(destPath, StringComparison.OrdinalIgnoreCase))
+                    _ = Task.Run(async () =>
                     {
-                        if (context.GetType().GetProperty("Preview", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context) as bool? ?? false)
-                            return;
-                        await Task.Delay(1500).ConfigureAwait(false); // Delay slightly to allow Shoko core to finish moving the main file first
+                        try
+                        {
+                            bool moved = false;
+                            for (int i = 0; i < 30; i++)
+                            {
+                                await Task.Delay(200).ConfigureAwait(false);
+                                if (File.Exists(destPath) && !File.Exists(srcPath))
+                                {
+                                    moved = true;
+                                    break;
+                                }
+                            }
 
-                        string? srcPath =
-                            context.File.GetType().GetProperty("Path", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context.File) as string
-                            ?? context.File.GetType().GetProperty("FilePath", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context.File) as string;
-                        string destDir = result.ManagedFolder?.Path ?? Path.GetDirectoryName(srcPath) ?? string.Empty;
-
-                        if (!string.IsNullOrWhiteSpace(srcPath))
-                            RenamerHelper.RelocateSidecars(srcPath, Path.Combine(destDir, result.Path ?? string.Empty, result.FileName ?? context.File.FileName), videoService);
-                    }
-                    catch
-                    { /* Ignore missing properties or IO errors during sidecar relocation */
-                    }
-                });
+                            if (moved)
+                                RenamerHelper.RelocateSidecars(srcPath, destPath, videoService);
+                        }
+                        catch (Exception ex)
+                        {
+                            s_logger.Warn(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
+                        }
+                    });
+            }
 
             return result;
         }
