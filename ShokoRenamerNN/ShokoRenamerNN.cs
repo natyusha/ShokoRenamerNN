@@ -123,6 +123,9 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
                             if (moved)
                                 RenamerHelper.RelocateSidecars(srcPath, destPath, sourceFolder, videoService);
                         }
+                        catch (DirectoryNotFoundException)
+                        { /* Directory was already cleaned up by Shoko or a concurrent job */
+                        }
                         catch (Exception ex)
                         {
                             s_logger.Warn(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);

@@ -272,6 +272,22 @@ public static partial class RenamerHelper
         }
     }
 
+    /// <summary>Checks whether a folder contains any video files recognized and matched by Shoko.</summary>
+    /// <param name="dir">The absolute directory path to scan.</param>
+    /// <param name="videoService">The video service injected from Shoko.</param>
+    /// <returns>True if any file within the directory is matched by Shoko; otherwise, false.</returns>
+    private static bool ContainsMatchedVideos(string dir, IVideoService videoService)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Any(f => videoService.IsAllowedVideoExtension(f) && IsMatchedVideo(f, videoService));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>Moves associated sidecar files, images, attachment folders, and series assets when a file is relocated.</summary>
     /// <param name="srcPath">The original full path of the file.</param>
     /// <param name="destPath">The new full path of the file.</param>
@@ -279,79 +295,93 @@ public static partial class RenamerHelper
     /// <param name="videoService">The video service injected from Shoko.</param>
     public static void RelocateSidecars(string srcPath, string destPath, IManagedFolder? sourceFolder, IVideoService videoService)
     {
-        if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath))
-            return;
-
-        string srcDir = Path.GetDirectoryName(srcPath)!;
-        string destDir = Path.GetDirectoryName(destPath)!;
-        if (!Directory.Exists(srcDir))
-            return;
-
-        string srcBase = Path.GetFileNameWithoutExtension(srcPath);
-        string destBase = Path.GetFileNameWithoutExtension(destPath);
-        var cmp = StringComparison.OrdinalIgnoreCase;
-
-        if (srcDir.Equals(destDir, cmp) && srcBase.Equals(destBase, cmp))
-            return;
-        if (!Directory.Exists(destDir))
-            Directory.CreateDirectory(destDir);
-
-        // Episode-level sidecars and attachment folders (safe to move out of any folder type)
-        foreach (var entry in Directory.EnumerateFileSystemEntries(srcDir, srcBase + "*"))
+        try
         {
-            if (entry.Equals(srcPath, cmp) || entry.Equals(destPath, cmp))
-                continue;
+            if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath))
+                return;
 
-            string name = Path.GetFileName(entry);
-            bool isDir = Directory.Exists(entry);
-            string suffix = name[srcBase.Length..];
+            string cleanSrcPath = Path.GetFullPath(srcPath);
+            string cleanDestPath = Path.GetFullPath(destPath);
+            string srcDir = Path.GetDirectoryName(cleanSrcPath)!;
+            string destDir = Path.GetDirectoryName(cleanDestPath)!;
+            if (!Directory.Exists(srcDir))
+                return;
 
-            if (isDir)
+            string srcBase = Path.GetFileNameWithoutExtension(cleanSrcPath);
+            string destBase = Path.GetFileNameWithoutExtension(cleanDestPath);
+            var cmp = StringComparison.OrdinalIgnoreCase;
+
+            if (srcDir.Equals(destDir, cmp) && srcBase.Equals(destBase, cmp))
+                return;
+            if (!Directory.Exists(destDir))
+                Directory.CreateDirectory(destDir);
+
+            // Episode-level sidecars and attachment folders (safe to move out of any folder type)
+            foreach (var entry in Directory.EnumerateFileSystemEntries(srcDir, srcBase + "*"))
             {
-                if (s_attachFolderSuffixes.Contains(suffix))
+                if (Path.GetFullPath(entry).Equals(cleanSrcPath, cmp) || Path.GetFullPath(entry).Equals(cleanDestPath, cmp))
+                    continue;
+
+                string name = Path.GetFileName(entry);
+                bool isDir = Directory.Exists(entry);
+                string suffix = name[srcBase.Length..];
+
+                if (isDir)
+                {
+                    if (s_attachFolderSuffixes.Contains(suffix))
+                    {
+                        string target = Path.Combine(destDir, destBase + suffix);
+                        MoveDirectorySafely(entry, target);
+                        s_logger.Info("Shoko Renamer NN: Relocated attachment folder -> \"{Old}\" to \"{New}\"", name, target);
+                    }
+                }
+                else if (s_sidecarExtensions.Contains(Path.GetExtension(entry)) || s_imageExtensions.Contains(Path.GetExtension(entry)))
                 {
                     string target = Path.Combine(destDir, destBase + suffix);
-                    MoveDirectorySafely(entry, target);
-                    s_logger.Info("Shoko Renamer NN: Relocated attachment folder -> \"{Old}\" to \"{New}\"", name, target);
+                    MoveFileSafely(entry, target);
+                    s_logger.Info("Shoko Renamer NN: Relocated sidecar file -> \"{Old}\" to \"{New}\"", name, target);
                 }
             }
-            else if (s_sidecarExtensions.Contains(Path.GetExtension(entry)) || s_imageExtensions.Contains(Path.GetExtension(entry)))
+
+            // Loose files and loose folders (only moved when relocating out of an existing destination managed folder)
+            bool canMoveLoose = !srcDir.Equals(destDir, cmp) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
+            if (canMoveLoose && Directory.Exists(srcDir))
             {
-                string target = Path.Combine(destDir, destBase + suffix);
-                MoveFileSafely(entry, target);
-                s_logger.Info("Shoko Renamer NN: Relocated sidecar file -> \"{Old}\" to \"{New}\"", name, target);
+                bool hasOtherVideos = Directory
+                    .EnumerateFiles(srcDir)
+                    .Any(f => !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && videoService.IsAllowedVideoExtension(f));
+                if (!hasOtherVideos)
+                {
+                    foreach (var dir in Directory.EnumerateDirectories(srcDir))
+                    {
+                        if (ContainsMatchedVideos(dir, videoService))
+                            continue;
+
+                        string target = Path.Combine(destDir, Path.GetFileName(dir));
+                        MoveDirectorySafely(dir, target);
+                        s_logger.Info("Shoko Renamer NN: Relocated loose folder -> \"{Old}\" to \"{New}\"", Path.GetFileName(dir), target);
+                    }
+
+                    foreach (var file in Directory.EnumerateFiles(srcDir))
+                    {
+                        if (Path.GetFullPath(file).Equals(cleanSrcPath, cmp) || Path.GetFullPath(file).Equals(cleanDestPath, cmp) || videoService.IsAllowedVideoExtension(file))
+                            continue;
+
+                        string target = Path.Combine(destDir, Path.GetFileName(file));
+                        MoveFileSafely(file, target);
+                        s_logger.Info("Shoko Renamer NN: Relocated loose file -> \"{Old}\" to \"{New}\"", Path.GetFileName(file), target);
+                    }
+
+                    CleanEmptyDirectories(srcDir, sourceFolder?.Path);
+                }
             }
         }
-
-        // Loose files and loose folders (only moved when relocating out of an existing destination managed folder)
-        bool canMoveLoose = !srcDir.Equals(destDir, cmp) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
-        if (canMoveLoose)
+        catch (DirectoryNotFoundException)
+        { /* Directory was already cleaned up or moved concurrently by Shoko core */
+        }
+        catch (Exception ex)
         {
-            bool hasOtherMatchedVideos = Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && !f.Equals(destPath, cmp) && IsMatchedVideo(f, videoService));
-            if (!hasOtherMatchedVideos)
-            {
-                foreach (var dir in Directory.EnumerateDirectories(srcDir))
-                {
-                    if (Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories).Any(f => IsMatchedVideo(f, videoService)))
-                        continue;
-
-                    string target = Path.Combine(destDir, Path.GetFileName(dir));
-                    MoveDirectorySafely(dir, target);
-                    s_logger.Info("Shoko Renamer NN: Relocated loose folder -> \"{Old}\" to \"{New}\"", Path.GetFileName(dir), target);
-                }
-
-                foreach (var file in Directory.EnumerateFiles(srcDir))
-                {
-                    if (file.Equals(srcPath, cmp) || file.Equals(destPath, cmp))
-                        continue;
-
-                    string target = Path.Combine(destDir, Path.GetFileName(file));
-                    MoveFileSafely(file, target);
-                    s_logger.Info("Shoko Renamer NN: Relocated loose file -> \"{Old}\" to \"{New}\"", Path.GetFileName(file), target);
-                }
-
-                CleanEmptyDirectories(srcDir, sourceFolder?.Path);
-            }
+            s_logger.Warn(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
         }
     }
 
