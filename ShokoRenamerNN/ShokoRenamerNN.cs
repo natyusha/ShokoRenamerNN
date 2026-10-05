@@ -1,6 +1,7 @@
 using NLog;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
+using Shoko.Abstractions.Video;
 using Shoko.Abstractions.Video.Enums;
 using Shoko.Abstractions.Video.Relocation;
 using Shoko.Abstractions.Video.Services;
@@ -98,6 +99,7 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
             if (context.MoveEnabled || context.RenameEnabled)
             {
                 string srcPath = context.File.Path;
+                IManagedFolder? sourceFolder = context.File.ManagedFolder;
                 string destDir = context.MoveEnabled && result.ManagedFolder != null ? Path.Combine(result.ManagedFolder.Path, result.Path ?? string.Empty) : Path.GetDirectoryName(srcPath) ?? string.Empty;
                 string destFileName = context.RenameEnabled && !string.IsNullOrWhiteSpace(result.FileName) ? result.FileName : Path.GetFileName(srcPath);
                 string destPath = Path.Combine(destDir, destFileName);
@@ -119,7 +121,7 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
                             }
 
                             if (moved)
-                                RenamerHelper.RelocateSidecars(srcPath, destPath, videoService);
+                                RenamerHelper.RelocateSidecars(srcPath, destPath, sourceFolder, videoService);
                         }
                         catch (Exception ex)
                         {

@@ -56,3 +56,7 @@ Files will be organized and named as follows:
 
 > [!NOTE]
 > Appending common prefixes, using single-entry titles, and preserving release tags can all be disabled in the settings if desired.
+
+### Sidecar & Asset Relocation
+
+Episode sidecar files (`.nfo`, `.xml`, `.chp`), images, and attachment folders (`_attach`/`_attachments`) are automatically relocated and renamed alongside each video file. When relocating an anime out of an existing destination folder, all loose files of any type, as well as unmatched subfolders will be moved with it.
