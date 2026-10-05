@@ -6,27 +6,27 @@ using Shoko.Abstractions.Metadata.Shoko;
 namespace ShokoRenamerNN;
 
 /// <summary>Utility methods for cleaning and formatting strings for the renaming engine.</summary>
-public static class RenamerHelper
+public static partial class RenamerHelper
 {
     #region Static Configuration
 
     /// <summary>Regex matching specific file tags to preserve and append to the final filename.</summary>
-    private static readonly Regex s_customFileTagsRegex = new(
-        @"\[(?i)(ptcen|unc|uncen|uncensored|cut|uncut|director's cut|original|rebroadcast|recap|[a-z]{3} documentary|documentary|\+?fvo|silent|native [a-z]{3}|raw|p?t?hardsubs [a-z]{3}|p?t?hardsubs|vertical|uhd|lq|watermark|cropped|logo|test|movie part\d\d?|part\d\d?)\]",
-        RegexOptions.Compiled
-    );
+    [GeneratedRegex(
+        @"\[(?i)(ptcen|unc|uncen|uncensored|cut|uncut|director's cut|original|rebroadcast|recap|[a-z]{3} documentary|documentary|\+?fvo|silent|native [a-z]{3}|raw|p?t?hardsubs [a-z]{3}|p?t?hardsubs|vertical|uhd|lq|watermark|cropped|logo|test|movie part\d\d?|part\d\d?)\]"
+    )]
+    private static partial Regex CustomFileTagsRegex();
 
     /// <summary>Regex for isolating and shifting common prefixes in folder names.</summary>
-    private static readonly Regex s_commonTitlePrefixesRegex = new(
-        @"^(Gekijou Henshuuban |Gekijou Soushuuhen |Gekijou Remix Ban |Gekijou Tanpen |Gekijouban 3D |Gekijouban |Eiga |OVA )(.+)$",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase
-    );
+    [GeneratedRegex(@"^(Gekijou Henshuuban |Gekijou Soushuuhen |Gekijou Remix Ban |Gekijou Tanpen |Gekijouban 3D |Gekijouban |Eiga |OVA )(.+)$", RegexOptions.IgnoreCase)]
+    private static partial Regex CommonTitlePrefixesRegex();
 
     /// <summary>Regex for condensing multiple spaces into a single space.</summary>
-    private static readonly Regex s_condenseSpacesRegex = new(@"\s{2,}", RegexOptions.Compiled);
+    [GeneratedRegex(@"\s{2,}")]
+    private static partial Regex CondenseSpacesRegex();
 
     /// <summary>Regex for replacing double quotes with curly quotes.</summary>
-    private static readonly Regex s_quoteRegex = new("\"(.*?)\"", RegexOptions.Compiled);
+    [GeneratedRegex("\"(.*?)\"")]
+    private static partial Regex QuoteRegex();
 
     /// <summary>Table of ambiguous single-entry titles.</summary>
     private static readonly FrozenSet<string> s_singleEntryTitles = ((string[])["Complete Movie", "Short Movie", "Music Video", "Special", "TV Special", "OAD", "OVA", "Web"]).ToFrozenSet(
@@ -48,6 +48,18 @@ public static class RenamerHelper
 
     /// <summary>Mapping of stylistic text replacements.</summary>
     private static readonly (string Find, string Replace)[] s_styledReplacements = [("1/2", "½"), ("1/6", "⅙"), ("-->", "→"), ("<--", "←"), ("->", "→"), ("<-", "←")];
+
+    /// <summary>Set of extensions considered as video files to determine if a directory is empty of videos.</summary>
+    private static readonly FrozenSet<string> s_videoExtensions = ((string[])[".mkv", ".mp4", ".avi", ".m4v", ".ogm", ".wmv", ".mpg", ".mpeg", ".flv"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Set of extensions considered as image files for series-level sidecars.</summary>
+    private static readonly FrozenSet<string> s_imageExtensions = ((string[])[".bmp", ".gif", ".jpe", ".jpeg", ".jpg", ".png", ".tbn", ".tif", ".tiff", ".webp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Set of extensions considered as episode-level sidecar files.</summary>
+    private static readonly FrozenSet<string> s_sidecarExtensions = ((string[])[".nfo", ".xml", ".chp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Suffixes for episode-level attachment folders.</summary>
+    private static readonly FrozenSet<string> s_attachFolderSuffixes = ((string[])["_attach", "_attachments"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     #endregion
 
@@ -72,7 +84,7 @@ public static class RenamerHelper
                 return (s_seriesOverrides, s_episodeOverrides);
 
             var newSeries = new Dictionary<int, string>();
-            var newEps = new Dictionary<int, (string?, string)>();
+            var newEps = new Dictionary<int, (string? Title, string EpNumber)>();
 
             foreach (var line in script.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
@@ -84,7 +96,6 @@ public static class RenamerHelper
                     continue;
 
                 var ids = parts[0].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(s => int.TryParse(s, out int parsed) ? parsed : 0).Where(id => id > 0).ToList();
-
                 if (ids.Count == 0)
                     continue;
 
@@ -128,23 +139,21 @@ public static class RenamerHelper
         {
             foreach (var (f, r) in s_styledReplacements)
                 c = c.Replace(f, r, StringComparison.Ordinal);
-            c = s_quoteRegex.Replace(c, "“$1”");
+            c = QuoteRegex().Replace(c, "“$1”");
         }
 
         if (config.ReplaceInvalidCharacters)
-        {
             c = string.Create(
                 c.Length,
                 c,
                 (chars, state) =>
                 {
                     for (int i = 0; i < state.Length; i++)
-                        chars[i] = s_replacementCharMap.TryGetValue(state[i], out var m) ? m : state[i];
+                        chars[i] = s_replacementCharMap.TryGetValue(state[i], out char m) ? m : state[i];
                 }
             );
-        }
 
-        return s_condenseSpacesRegex.Replace(c, " ").Trim();
+        return CondenseSpacesRegex().Replace(c, " ").Trim();
     }
 
     /// <summary>Extracts allowed custom tags from the original filename and concatenates them.</summary>
@@ -155,13 +164,8 @@ public static class RenamerHelper
     {
         if (!config.PreserveCustomTags)
             return "";
-
-        var matches = s_customFileTagsRegex.Matches(originalFileName);
-        if (matches.Count == 0)
-            return "";
-
-        var tags = matches.Select(m => m.Value).ToList();
-        return " " + string.Join(" ", tags);
+        var matches = CustomFileTagsRegex().Matches(originalFileName);
+        return matches.Count == 0 ? "" : " " + string.Join(" ", matches.Select(m => m.Value));
     }
 
     /// <summary>Generates a formatted episode number string, applying padding and handling special relations.</summary>
@@ -175,12 +179,10 @@ public static class RenamerHelper
             return "";
 
         var sortedEps = episodes.OrderBy(e => e.Type == EpisodeType.Other ? int.MinValue : (int)e.Type).ThenBy(e => e.EpisodeNumber).ToList();
-        var primaryEp = sortedEps.First();
+        var primaryEp = sortedEps[0];
 
         int zeros = primaryEp.Type != EpisodeType.Episode ? 1 : 2;
-        int maxEps = Math.Max(series.EpisodeCounts[primaryEp.Type], 1);
-        int pad = Math.Max(maxEps.ToString().Length, zeros);
-        string format = $"D{pad}";
+        string format = $"D{Math.Max(Math.Max(series.EpisodeCounts[primaryEp.Type], 1).ToString().Length, zeros)}";
 
         var ranges = new List<string>();
         foreach (var group in sortedEps.GroupBy(e => e.Type))
@@ -195,12 +197,11 @@ public static class RenamerHelper
                 EpisodeType.Episode => "",
                 _ => "U",
             };
-
             var nums = group.Select(e => e.EpisodeNumber).ToList();
-            if (nums.Count == 1 || nums.Last() - nums.First() != nums.Count - 1)
+            if (nums.Count == 1 || nums[^1] - nums[0] != nums.Count - 1)
                 ranges.Add($"{prefix}{string.Join($" {prefix}", nums.Select(n => n.ToString(format)))}");
             else
-                ranges.Add($"{prefix}{nums.First().ToString(format)}-{nums.Last().ToString(format)}");
+                ranges.Add($"{prefix}{nums[0].ToString(format)}-{nums[^1].ToString(format)}");
         }
 
         string epNumber = string.Join(" ", ranges);
@@ -218,7 +219,6 @@ public static class RenamerHelper
             string epName = primaryEp.Titles.FirstOrDefault(t => t.LanguageCode.Equals("en", StringComparison.OrdinalIgnoreCase))?.Value ?? "";
             if (primaryEp.EpisodeNumber == 1 && s_singleEntryTitles.Contains(epName))
                 epNumber = $"({epName})";
-
             if (primaryEp.Type == EpisodeType.Episode && sortedEps.Count > 1 && epName.Contains("Part 1 of", StringComparison.OrdinalIgnoreCase))
                 epNumber = $"{sortedEps[0].EpisodeNumber - 1:D2} (E{sortedEps[1].EpisodeNumber})";
         }
@@ -232,7 +232,7 @@ public static class RenamerHelper
     /// <returns>A formatted folder name.</returns>
     public static string FormatFolderName(string title, RenamerConfig config)
     {
-        string folderName = config.MoveCommonPrefixes ? s_commonTitlePrefixesRegex.Replace(title, "$2 — $1") : title;
+        string folderName = config.MoveCommonPrefixes ? CommonTitlePrefixesRegex().Replace(title, "$2 — $1") : title;
 
         if (config.ReplaceInvalidCharacters)
         {
@@ -247,6 +247,81 @@ public static class RenamerHelper
         }
 
         return folderName.Trim();
+    }
+
+    #endregion
+
+    #region Relocation Helpers
+
+    /// <summary>Moves associated sidecar files, images, and attachment folders when a file is relocated.</summary>
+    /// <param name="srcPath">The original full path of the file.</param>
+    /// <param name="destPath">The new full path of the file.</param>
+    public static void RelocateSidecars(string srcPath, string destPath)
+    {
+        if (string.IsNullOrWhiteSpace(srcPath) || string.IsNullOrWhiteSpace(destPath) || !File.Exists(srcPath))
+            return;
+
+        string srcDir = Path.GetDirectoryName(srcPath)!;
+        string destDir = Path.GetDirectoryName(destPath)!;
+        if (srcDir.Equals(destDir, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        string srcBase = Path.GetFileNameWithoutExtension(srcPath);
+        string destBase = Path.GetFileNameWithoutExtension(destPath);
+        var cmp = StringComparison.OrdinalIgnoreCase;
+
+        if (!Directory.Exists(destDir))
+            Directory.CreateDirectory(destDir);
+
+        foreach (var entry in Directory.EnumerateFileSystemEntries(srcDir, srcBase + "*"))
+        {
+            if (entry.Equals(srcPath, cmp))
+                continue;
+
+            string name = Path.GetFileName(entry);
+            if (Directory.Exists(entry))
+            {
+                string suffix = name[srcBase.Length..];
+                if (s_attachFolderSuffixes.Contains(suffix))
+                    MoveDirectorySafely(entry, Path.Combine(destDir, destBase + suffix));
+            }
+            else if (s_sidecarExtensions.Contains(Path.GetExtension(entry)))
+                MoveFileSafely(entry, Path.Combine(destDir, destBase + Path.GetExtension(entry)));
+        }
+
+        if (!Directory.EnumerateFiles(srcDir).Any(f => !f.Equals(srcPath, cmp) && s_videoExtensions.Contains(Path.GetExtension(f))))
+            foreach (var file in Directory.EnumerateFiles(srcDir))
+            {
+                string name = Path.GetFileName(file);
+                if (name.Equals("Theme.mp3", cmp) || s_imageExtensions.Contains(Path.GetExtension(file)))
+                    MoveFileSafely(file, Path.Combine(destDir, name));
+            }
+    }
+
+    /// <summary>Safely moves a file, catching and ignoring any exceptions.</summary>
+    private static void MoveFileSafely(string src, string dest)
+    {
+        try
+        {
+            if (!File.Exists(dest))
+                File.Move(src, dest);
+        }
+        catch
+        { /* Ignore */
+        }
+    }
+
+    /// <summary>Safely moves a directory, catching and ignoring any exceptions.</summary>
+    private static void MoveDirectorySafely(string src, string dest)
+    {
+        try
+        {
+            if (!Directory.Exists(dest))
+                Directory.Move(src, dest);
+        }
+        catch
+        { /* Ignore */
+        }
     }
 
     #endregion

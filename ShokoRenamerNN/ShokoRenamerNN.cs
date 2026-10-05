@@ -1,3 +1,4 @@
+using System.Reflection;
 using NLog;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
@@ -77,7 +78,6 @@ public class ShokoRenamer : IRelocationProvider<RenamerConfig>
             {
                 // Ensure anime tagged as "18 restricted" are segregated into the configued '18 Restricted Folder Name' destination
                 string destName = primarySeries.Restricted ? context.Configuration.RestrictedDestination : context.Configuration.MainDestination;
-
                 var destFolder =
                     (
                         context.AvailableFolders.FirstOrDefault(f => f.DropFolderType.HasFlag(DropFolderType.Destination) && f.Name.Equals(destName, StringComparison.OrdinalIgnoreCase))
@@ -93,6 +93,28 @@ public class ShokoRenamer : IRelocationProvider<RenamerConfig>
                 string extension = Path.GetExtension(context.File.FileName);
                 result.FileName = $"{title} - {epNumber}{fileTags}{extension}";
             }
+
+            if (context.MoveEnabled || context.RenameEnabled)
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        if (context.GetType().GetProperty("Preview", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context) as bool? ?? false)
+                            return;
+                        await Task.Delay(1500).ConfigureAwait(false); // Delay slightly to allow Shoko core to finish moving the main file first
+
+                        string? srcPath =
+                            context.File.GetType().GetProperty("Path", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context.File) as string
+                            ?? context.File.GetType().GetProperty("FilePath", BindingFlags.Public | BindingFlags.Instance)?.GetValue(context.File) as string;
+                        string destDir = result.ManagedFolder?.Path ?? Path.GetDirectoryName(srcPath) ?? string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(srcPath))
+                            RenamerHelper.RelocateSidecars(srcPath, Path.Combine(destDir, result.Path ?? string.Empty, result.FileName ?? context.File.FileName));
+                    }
+                    catch
+                    { /* Ignore missing properties or IO errors during sidecar relocation */
+                    }
+                });
 
             return result;
         }
