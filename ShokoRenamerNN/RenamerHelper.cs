@@ -1,6 +1,6 @@
 using System.Collections.Frozen;
 using System.Text.RegularExpressions;
-using NLog;
+using Microsoft.Extensions.Logging;
 using Shoko.Abstractions.Metadata.Enums;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Video;
@@ -254,8 +254,6 @@ public static partial class RenamerHelper
 
     #region Relocation Helpers
 
-    private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
-
     /// <summary>Checks whether a video file exists in Shoko and is explicitly flagged as ignored.</summary>
     /// <param name="filePath">The absolute path to the file.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
@@ -310,7 +308,8 @@ public static partial class RenamerHelper
     /// <param name="destPath">The new full path of the file.</param>
     /// <param name="sourceFolder">The source managed folder containing the file.</param>
     /// <param name="videoService">The video service injected from Shoko.</param>
-    public static void RelocateSidecars(string srcPath, string destPath, IManagedFolder? sourceFolder, IVideoService videoService)
+    /// <param name="logger">The logger instance.</param>
+    public static void RelocateSidecars(string srcPath, string destPath, IManagedFolder? sourceFolder, IVideoService videoService, ILogger logger)
     {
         try
         {
@@ -348,15 +347,15 @@ public static partial class RenamerHelper
                     if (s_attachFolderSuffixes.Contains(suffix))
                     {
                         string target = Path.Combine(destDir, destBase + suffix);
-                        MoveDirectorySafely(entry, target);
-                        s_logger.Info("Shoko Renamer NN: Relocated attachment folder -> \"{Old}\" to \"{New}\"", name, target);
+                        MoveDirectorySafely(entry, target, logger);
+                        logger.LogInformation("Shoko Renamer NN: Relocated attachment folder -> \"{Old}\" to \"{New}\"", name, target);
                     }
                 }
                 else if (s_sidecarExtensions.Contains(Path.GetExtension(entry)) || s_imageExtensions.Contains(Path.GetExtension(entry)))
                 {
                     string target = Path.Combine(destDir, destBase + suffix);
-                    MoveFileSafely(entry, target);
-                    s_logger.Info("Shoko Renamer NN: Relocated sidecar file -> \"{Old}\" to \"{New}\"", name, target);
+                    MoveFileSafely(entry, target, logger);
+                    logger.LogInformation("Shoko Renamer NN: Relocated sidecar file -> \"{Old}\" to \"{New}\"", name, target);
                 }
             }
 
@@ -376,8 +375,8 @@ public static partial class RenamerHelper
                             continue;
 
                         string target = Path.Combine(destDir, Path.GetFileName(dir));
-                        MoveDirectorySafely(dir, target);
-                        s_logger.Info("Shoko Renamer NN: Relocated loose folder -> \"{Old}\" to \"{New}\"", Path.GetFileName(dir), target);
+                        MoveDirectorySafely(dir, target, logger);
+                        logger.LogInformation("Shoko Renamer NN: Relocated loose folder -> \"{Old}\" to \"{New}\"", Path.GetFileName(dir), target);
                     }
 
                     foreach (var file in Directory.EnumerateFiles(srcDir))
@@ -388,11 +387,11 @@ public static partial class RenamerHelper
                             continue;
 
                         string target = Path.Combine(destDir, Path.GetFileName(file));
-                        MoveFileSafely(file, target);
-                        s_logger.Info("Shoko Renamer NN: Relocated loose file -> \"{Old}\" to \"{New}\"", Path.GetFileName(file), target);
+                        MoveFileSafely(file, target, logger);
+                        logger.LogInformation("Shoko Renamer NN: Relocated loose file -> \"{Old}\" to \"{New}\"", Path.GetFileName(file), target);
                     }
 
-                    CleanEmptyDirectories(srcDir, sourceFolder?.Path);
+                    CleanEmptyDirectories(srcDir, sourceFolder?.Path, logger);
                 }
             }
         }
@@ -401,14 +400,15 @@ public static partial class RenamerHelper
         }
         catch (Exception ex)
         {
-            s_logger.Warn(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
+            logger.LogWarning(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
         }
     }
 
     /// <summary>Safely moves a file, replacing the destination if it already exists.</summary>
     /// <param name="src">The source file path.</param>
     /// <param name="dest">The destination file path.</param>
-    private static void MoveFileSafely(string src, string dest)
+    /// <param name="logger">The logger instance.</param>
+    private static void MoveFileSafely(string src, string dest, ILogger logger)
     {
         try
         {
@@ -418,14 +418,15 @@ public static partial class RenamerHelper
         }
         catch (Exception ex)
         {
-            s_logger.Warn(ex, "Shoko Renamer NN: Failed to move file -> \"{Source}\" to \"{Destination}\"", src, dest);
+            logger.LogWarning(ex, "Shoko Renamer NN: Failed to move file -> \"{Source}\" to \"{Destination}\"", src, dest);
         }
     }
 
     /// <summary>Safely moves or merges a directory into a destination, replacing conflicting files.</summary>
     /// <param name="src">The source directory path.</param>
     /// <param name="dest">The destination directory path.</param>
-    private static void MoveDirectorySafely(string src, string dest)
+    /// <param name="logger">The logger instance.</param>
+    private static void MoveDirectorySafely(string src, string dest, ILogger logger)
     {
         try
         {
@@ -460,7 +461,7 @@ public static partial class RenamerHelper
                 }
                 catch (Exception ex)
                 {
-                    s_logger.Debug(ex, "Shoko Renamer NN: Could not move entry -> \"{File}\"", file);
+                    logger.LogDebug(ex, "Shoko Renamer NN: Could not move entry -> \"{File}\"", file);
                 }
             }
 
@@ -474,14 +475,15 @@ public static partial class RenamerHelper
         }
         catch (Exception ex)
         {
-            s_logger.Warn(ex, "Shoko Renamer NN: Failed to move directory -> \"{Source}\" to \"{Destination}\"", src, dest);
+            logger.LogWarning(ex, "Shoko Renamer NN: Failed to move directory -> \"{Source}\" to \"{Destination}\"", src, dest);
         }
     }
 
     /// <summary>Recursively deletes empty directories starting from the target directory upwards until a non-empty directory or root is reached.</summary>
     /// <param name="dir">The directory to delete if empty.</param>
     /// <param name="rootPath">The root directory path that should never be deleted.</param>
-    private static void CleanEmptyDirectories(string dir, string? rootPath = null)
+    /// <param name="logger">The logger instance.</param>
+    private static void CleanEmptyDirectories(string dir, string? rootPath, ILogger logger)
     {
         try
         {
@@ -489,13 +491,13 @@ public static partial class RenamerHelper
             while (!string.IsNullOrEmpty(dir) && (string.IsNullOrEmpty(rootPath) || !dir.Equals(rootPath, cmp)) && Directory.Exists(dir) && !Directory.EnumerateFileSystemEntries(dir).Any())
             {
                 Directory.Delete(dir, false);
-                s_logger.Info("Shoko Renamer NN: Cleaned up empty folder -> \"{Directory}\"", dir);
+                logger.LogInformation("Shoko Renamer NN: Cleaned up empty folder -> \"{Directory}\"", dir);
                 dir = Path.GetDirectoryName(dir)!;
             }
         }
         catch (Exception ex)
         {
-            s_logger.Debug(ex, "Shoko Renamer NN: Could not remove directory -> \"{Directory}\"", dir);
+            logger.LogDebug(ex, "Shoko Renamer NN: Could not remove directory -> \"{Directory}\"", dir);
         }
     }
 

@@ -47,7 +47,6 @@
 
   <ItemGroup>
     <PackageReference Include="Shoko.Abstractions" Version="6.0.0-alpha.98" ExcludeAssets="runtime" />
-    <PackageReference Include="NLog" Version="6.1.4" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <!-- Embed the plugin images for Shoko's WebUI -->

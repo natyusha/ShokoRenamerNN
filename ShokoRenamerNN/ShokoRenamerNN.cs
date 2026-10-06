@@ -1,4 +1,4 @@
-using NLog;
+using Microsoft.Extensions.Logging;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
 using Shoko.Abstractions.Video;
@@ -32,10 +32,9 @@ public class Plugin : IPlugin
 
 /// <summary>A C# relocation provider acting as a direct replacement for LuaRenamer scripts.</summary>
 /// <param name="videoService">Shoko video service for extension checking.</param>
-public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<RenamerConfig>
+/// <param name="logger">The logger instance.</param>
+public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logger) : IRelocationProvider<RenamerConfig>
 {
-    private static readonly Logger s_logger = LogManager.GetCurrentClassLogger();
-
     /// <inheritdoc/>
     public string Name => ShokoRenamerNNConstants.Name;
 
@@ -121,14 +120,14 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
                             }
 
                             if (moved)
-                                RenamerHelper.RelocateSidecars(srcPath, destPath, sourceFolder, videoService);
+                                RenamerHelper.RelocateSidecars(srcPath, destPath, sourceFolder, videoService, logger);
                         }
                         catch (DirectoryNotFoundException)
                         { /* Directory was already cleaned up by Shoko or a concurrent job */
                         }
                         catch (Exception ex)
                         {
-                            s_logger.Warn(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
+                            logger.LogWarning(ex, "Shoko Renamer NN: Error relocating sidecars for {File}", srcPath);
                         }
                     });
             }
@@ -137,7 +136,7 @@ public class ShokoRenamer(IVideoService videoService) : IRelocationProvider<Rena
         }
         catch (Exception e)
         {
-            s_logger.Warn(e, "Shoko Renamer NN: Relocation failed for file -> {File}", context.File.FileName);
+            logger.LogWarning(e, "Shoko Renamer NN: Relocation failed for file -> {File}", context.File.FileName);
             return new RelocationResult { Error = new RelocationError(e.Message, e) };
         }
     }
