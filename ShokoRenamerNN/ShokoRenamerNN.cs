@@ -109,9 +109,9 @@ public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logg
                         try
                         {
                             bool moved = false;
-                            for (int i = 0; i < 30; i++)
+                            for (int i = 0; i < 300; i++) // Allow up to 5 minutes for large files crossing filesystem boundaries
                             {
-                                await Task.Delay(200).ConfigureAwait(false);
+                                await Task.Delay(1000).ConfigureAwait(false);
                                 if (File.Exists(destPath) && !File.Exists(srcPath))
                                 {
                                     moved = true;

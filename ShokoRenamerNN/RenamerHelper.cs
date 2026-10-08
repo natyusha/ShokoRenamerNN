@@ -404,7 +404,7 @@ public static partial class RenamerHelper
         }
     }
 
-    /// <summary>Safely moves a file, replacing the destination if it already exists.</summary>
+    /// <summary>Safely moves a file, skipping if the destination already exists.</summary>
     /// <param name="src">The source file path.</param>
     /// <param name="dest">The destination file path.</param>
     /// <param name="logger">The logger instance.</param>
@@ -413,7 +413,10 @@ public static partial class RenamerHelper
         try
         {
             if (File.Exists(dest))
-                File.Delete(dest);
+            {
+                logger.LogDebug("Shoko Renamer NN: Destination file already exists, skipping move -> \"{Destination}\"", dest);
+                return;
+            }
             File.Move(src, dest);
         }
         catch (Exception ex)
@@ -422,7 +425,7 @@ public static partial class RenamerHelper
         }
     }
 
-    /// <summary>Safely moves or merges a directory into a destination, replacing conflicting files.</summary>
+    /// <summary>Safely moves or merges a directory into a destination, skipping conflicting files.</summary>
     /// <param name="src">The source directory path.</param>
     /// <param name="dest">The destination directory path.</param>
     /// <param name="logger">The logger instance.</param>
@@ -433,6 +436,7 @@ public static partial class RenamerHelper
             if (!Directory.Exists(src))
                 return;
 
+            // If the destination doesn't exist, try moving the entire directory at once
             if (!Directory.Exists(dest))
             {
                 try
@@ -445,6 +449,7 @@ public static partial class RenamerHelper
                 }
             }
 
+            // Fallback: merge into the existing destination directory
             var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true };
             foreach (var file in Directory.EnumerateFiles(src, "*", options))
             {
@@ -455,8 +460,13 @@ public static partial class RenamerHelper
                     string? dir = Path.GetDirectoryName(target);
                     if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                         Directory.CreateDirectory(dir);
+
                     if (File.Exists(target) || Directory.Exists(target))
-                        File.Delete(target);
+                    {
+                        logger.LogDebug("Shoko Renamer NN: Destination entry already exists, skipping move -> \"{Destination}\"", target);
+                        continue;
+                    }
+
                     File.Move(file, target);
                 }
                 catch (Exception ex)
@@ -465,9 +475,22 @@ public static partial class RenamerHelper
                 }
             }
 
+            // Safely clean up the source directory structure (bottom-up), leaving behind any skipped files
+            foreach (var dir in Directory.EnumerateDirectories(src, "*", options).OrderByDescending(d => d.Length))
+            {
+                try
+                {
+                    if (!Directory.EnumerateFileSystemEntries(dir).Any())
+                        Directory.Delete(dir, false);
+                }
+                catch
+                { /* Ignore */
+                }
+            }
             try
             {
-                Directory.Delete(src, true);
+                if (!Directory.EnumerateFileSystemEntries(src).Any())
+                    Directory.Delete(src, false);
             }
             catch
             { /* Ignore */
