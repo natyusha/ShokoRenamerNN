@@ -23,20 +23,20 @@
         {
           "runtime": "linux-arm64",
           "abstraction": "6.0.0",
-          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_linux-arm64.zip",
-          "checksum": "sha256:87c8c225a3eab7f973b563a23c2713158a1f01ae6512b1f77672f17e1f420d57"
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3_linux-arm64.zip",
+          "checksum": "sha256:ee2831634e45910f674db4cb74968bafe065b9c1ba2bed5a70e8c4baf7b3da9c"
         },
         {
           "runtime": "linux-x64",
           "abstraction": "6.0.0",
-          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_linux-x64.zip",
-          "checksum": "sha256:2c57e4080da57855bba6a749f7bf66150afaf233744b0c99efa5a2fb5e7686c9"
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3_linux-x64.zip",
+          "checksum": "sha256:1b04387a4bf72ef45d6c37ff973ce54ab8270d9f262cf344ac1cceaa7b777ec6"
         },
         {
           "runtime": "win-x64",
           "abstraction": "6.0.0",
-          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_win-x64.zip",
-          "checksum": "sha256:7a093a6e8a7f26bcfd30f478f5f86a5e14fac0ea3802c3badeac4758b9414bcb"
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3_win-x64.zip",
+          "checksum": "sha256:bebf58adf1a3cdbe4e8b4aff6d62dd76022b9eacc1a3d774e97aefdaf2abb097"
         }
       ]
     },
