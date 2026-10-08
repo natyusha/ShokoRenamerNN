@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.0.3",
+      "tag": "v1.0.3",
+      "source_revision": "66affe334b7134fed774c30d9386e02c0aa209b3",
+      "released_at": "2026-10-08T15:03:02Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Add support for automatically relocating episode sidecar files (`.nfo`, `.xml`, images) and attachment folders\r\n- Relocate series-level assets (`Theme.mp3`, loose images, unmatched/ignored videos, and loose folders) when vacating a destination folder\r\n- Prevent data loss by never overwriting existing files at the destination\r\n- Safely clean up empty source directories from the bottom up after relocation\r\n- Fix race conditions with Shoko core during video hashing and concurrent directory deletions\r\n- Increase the sidecar relocation polling timeout to 5 minutes to fully support slow cross-drive migrations\r\n- Tolerate symlinks gracefully during folder scanning and relocation\r\n- Migrate logging to `Microsoft.Extensions.Logging` to natively integrate with Shoko's log system\r\n- Optimize regex performance and string manipulation using modern .NET features\r\n- Update README with expanded file naming explanations and sidecar documentation\r\n- Bump Shoko.Abstractions to v6.0.0-alpha.100\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.0.2...v1.0.3",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_linux-arm64.zip",
+          "checksum": "sha256:87c8c225a3eab7f973b563a23c2713158a1f01ae6512b1f77672f17e1f420d57"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_linux-x64.zip",
+          "checksum": "sha256:2c57e4080da57855bba6a749f7bf66150afaf233744b0c99efa5a2fb5e7686c9"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.0.3/ShokoRenamerNN-v1.0.3-dev_win-x64.zip",
+          "checksum": "sha256:7a093a6e8a7f26bcfd30f478f5f86a5e14fac0ea3802c3badeac4758b9414bcb"
+        }
+      ]
+    },
+    {
       "version": "1.0.2",
       "tag": "v1.0.2",
       "source_revision": "e2a80aa1c4c18f0ec5c9909a85fe444e752902d8",
