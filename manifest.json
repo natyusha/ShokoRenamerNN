@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.2.0",
+      "tag": "v1.2.0",
+      "source_revision": "932953733bb9cc4b7c450920bdfe081e69dea779",
+      "released_at": "2026-10-16T08:49:38Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Bump Shoko.Abstractions to v6.0.0-alpha.108\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.1.0...v1.2.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.0/ShokoRenamerNN-v1.2.0_linux-arm64.zip",
+          "checksum": "sha256:0caebea46716769b4a5b00976cde210a11df8f3216789cce1616eeb8b84a78b4"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.0/ShokoRenamerNN-v1.2.0_linux-x64.zip",
+          "checksum": "sha256:32d19de360eebf0416657d3932bb7b447f995582a6cd753332e931a03506028b"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.0/ShokoRenamerNN-v1.2.0_win-x64.zip",
+          "checksum": "sha256:3b9e9c7b89c1829d8d49fcc64d2716fe36f46a6ef7b6e18d45674541fae68ecf"
+        }
+      ]
+    },
+    {
       "version": "1.1.0",
       "tag": "v1.1.0",
       "source_revision": "8ca74d5759d6c64605efa5de0e509dcad6a22a0d",
