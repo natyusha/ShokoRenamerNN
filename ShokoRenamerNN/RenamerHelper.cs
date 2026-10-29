@@ -16,7 +16,9 @@ public static partial class RenamerHelper
 
     /// <summary>Regex matching specific file tags to preserve and append to the final filename.</summary>
     [GeneratedRegex(
-        @"\[(?i)(ptcen|unc|uncen|uncensored|cut|uncut|director's cut|original|rebroadcast|recap|[a-z]{3} documentary|documentary|\+?fvo|silent|native [a-z]{3}|raw|p?t?hardsubs [a-z]{3}|p?t?hardsubs|vertical|uhd|lq|watermark|cropped|logo|test|movie part\d\d?|part\d\d?)\]"
+        @"\[(?:(?:pt)?cen(?:sored)?|unc(?:en(?:sored)?)?|(?:un)?cut|director's cut|original|rebroadcast|recap|(?:[a-z]{2,3} )?documentary|\+?fvo|silent|native [a-z]{2,3}|"
+            + @"raw|(?:pt)?hardsubs(?: [a-z]{2,3})?|vertical|uhd|lq|watermark|cropped|logo|test|variation(?: [1-9])?|(?:v(?:ersion)? ?|(?:movie )?part ?)\d{1,2})\]",
+        RegexOptions.IgnoreCase
     )]
     private static partial Regex CustomFileTagsRegex();
 
