@@ -59,7 +59,9 @@ public static partial class RenamerHelper
     private static readonly FrozenSet<string> s_imageExtensions = ((string[])[".bmp", ".gif", ".jpe", ".jpeg", ".jpg", ".png", ".tbn", ".tif", ".tiff", ".webp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Set of extensions considered as episode-level sidecar files.</summary>
-    private static readonly FrozenSet<string> s_sidecarExtensions = ((string[])[".nfo", ".xml", ".chp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+    private static readonly FrozenSet<string> s_sidecarExtensions = ((string[])[".nfo", ".xml", ".chp", ".ass", ".srt", ".ssa", ".smi", ".sub", ".idx", ".vtt", ".sup"]).ToFrozenSet(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     /// <summary>Suffixes for episode-level attachment folders.</summary>
     private static readonly FrozenSet<string> s_attachFolderSuffixes = ((string[])["_attach", "_attachments"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
@@ -297,7 +299,7 @@ public static partial class RenamerHelper
         try
         {
             var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true };
-            return Directory.EnumerateFiles(dir, "*", options).Any(f => IsMatchedActiveEpisode(f, videoService));
+            return Directory.EnumerateFiles(dir, "*", options).Any(f => videoService.IsAllowedVideoExtension(f) && IsMatchedActiveEpisode(f, videoService));
         }
         catch
         {
@@ -367,7 +369,7 @@ public static partial class RenamerHelper
             {
                 bool hasOtherActiveVideos = Directory
                     .EnumerateFiles(srcDir)
-                    .Any(f => !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && videoService.IsAllowedVideoExtension(f) && !IsIgnoredVideo(f, videoService));
+                    .Any(f => videoService.IsAllowedVideoExtension(f) && !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && !IsIgnoredVideo(f, videoService));
 
                 if (!hasOtherActiveVideos)
                 {
