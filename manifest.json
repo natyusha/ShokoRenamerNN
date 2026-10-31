@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.2.1",
+      "tag": "v1.2.1",
+      "source_revision": "4d48f2f275d5f1b210345795c9d498b5ce86fc1c",
+      "released_at": "2026-10-31T17:19:06Z",
+      "channel": "Stable",
+      "release_notes": "This release will correctly rename episode level subtitles which don't match Shoko server's built in naming conventions.\r\n\r\n**Changes:**\r\n- Expanded language code matching for custom file tags to support both 2 and 3 letter variants\r\n- Added external subtitle and index extensions to episode-level sidecar matching\r\n- Updated README to document external subtitle relocation\r\n- Bumped Shoko.Abstractions to v6.0.0-alpha.120\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.2.0...v1.2.1",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.1/ShokoRenamerNN-v1.2.1_linux-arm64.zip",
+          "checksum": "sha256:85023b3c6c96905d06f9c3d721faf58642d37a90d4ab75f1efdb77d36ef89c8f"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.1/ShokoRenamerNN-v1.2.1_linux-x64.zip",
+          "checksum": "sha256:49ca851d5f51290856dd771cbe2b6070cc3bbd7617497177d425546de14e8291"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.1/ShokoRenamerNN-v1.2.1_win-x64.zip",
+          "checksum": "sha256:a8e0fb90d9f046c3902c888dd530af5528007c98e9851ae1c476334e3ed0cf7f"
+        }
+      ]
+    },
+    {
       "version": "1.2.0",
       "tag": "v1.2.0",
       "source_revision": "932953733bb9cc4b7c450920bdfe081e69dea779",
