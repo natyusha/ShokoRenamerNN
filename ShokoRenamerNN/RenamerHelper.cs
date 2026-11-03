@@ -26,6 +26,14 @@ public static partial class RenamerHelper
     [GeneratedRegex(@"^(Gekijou Henshuuban |Gekijou Soushuuhen |Gekijou Remix Ban |Gekijou Tanpen |Gekijouban 3D |Gekijouban |Eiga |OVA )(.+)$", RegexOptions.IgnoreCase)]
     private static partial Regex CommonTitlePrefixesRegex();
 
+    /// <summary>Regex matching episode number relations for Other episodes to format as O## (E##).</summary>
+    [GeneratedRegex(@"^([0-9 -]+)\s+O(\d+(?:-\d+)?)$")]
+    private static partial Regex RelationOtherRegex();
+
+    /// <summary>Regex matching episode number relations for Special episodes to format as ## (S##).</summary>
+    [GeneratedRegex(@"^([0-9 -]+)\s+S(\d+(?:-\d+)?)$")]
+    private static partial Regex RelationSpecialRegex();
+
     /// <summary>Regex for condensing multiple spaces into a single space.</summary>
     [GeneratedRegex(@"\s{2,}")]
     private static partial Regex CondenseSpacesRegex();
@@ -183,7 +191,7 @@ public static partial class RenamerHelper
         if (episodes.Count == 0)
             return "";
 
-        var sortedEps = episodes.OrderBy(e => e.Type == EpisodeType.Other ? int.MinValue : (int)e.Type).ThenBy(e => e.EpisodeNumber).ToList();
+        var sortedEps = episodes.OrderBy(e => (int)e.Type).ThenBy(e => e.EpisodeNumber).ToList();
         var primaryEp = sortedEps[0];
 
         int zeros = primaryEp.Type != EpisodeType.Episode ? 1 : 2;
@@ -210,14 +218,8 @@ public static partial class RenamerHelper
         }
 
         string epNumber = string.Join(" ", ranges);
-
-        if (sortedEps.Count == 2 && sortedEps[0].Type == EpisodeType.Episode)
-        {
-            if (sortedEps[1].Type == EpisodeType.Other)
-                epNumber = $"O{sortedEps[1].EpisodeNumber} (E{sortedEps[0].EpisodeNumber.ToString(format)})";
-            else if (sortedEps[1].Type == EpisodeType.Special)
-                epNumber = $"{sortedEps[0].EpisodeNumber.ToString(format)} (S{sortedEps[1].EpisodeNumber})";
-        }
+        epNumber = RelationOtherRegex().Replace(epNumber, "O$2 (E$1)");
+        epNumber = RelationSpecialRegex().Replace(epNumber, "$1 (S$2)");
 
         if (config.RenameAmbiguousEpisodes)
         {
