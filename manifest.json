@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.2.2",
+      "tag": "v1.2.2",
+      "source_revision": "f027af3f42599abfc688d912b545ac348f2775c4",
+      "released_at": "2026-11-03T22:31:42Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Correctly handle O## (E##) and ## (S##) episode relations as described in the README.md\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.2.1...v1.2.2",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.2/ShokoRenamerNN-v1.2.2_linux-arm64.zip",
+          "checksum": "sha256:3a6882118fe510d1a412e487ec52376c4e3fa524b4cb82170fd057297600eced"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.2/ShokoRenamerNN-v1.2.2_linux-x64.zip",
+          "checksum": "sha256:084dc3ab43d8483f839149f51d8647cc84d887eb840d4acdd5766c205fe361fc"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.2/ShokoRenamerNN-v1.2.2_win-x64.zip",
+          "checksum": "sha256:8545efcf7d494a23e93dc02244c563b4b90fa21ff7aab4e584ab0f163b52f1c8"
+        }
+      ]
+    },
+    {
       "version": "1.2.1",
       "tag": "v1.2.1",
       "source_revision": "4d48f2f275d5f1b210345795c9d498b5ce86fc1c",
