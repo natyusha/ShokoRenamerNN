@@ -328,7 +328,7 @@ public static partial class RenamerHelper
             string destBase = Path.GetFileNameWithoutExtension(cleanDestPath);
             var cmp = StringComparison.OrdinalIgnoreCase;
 
-            if (srcDir.Equals(destDir, cmp) && srcBase.Equals(destBase, cmp))
+            if (srcDir.Equals(destDir, StringComparison.Ordinal) && srcBase.Equals(destBase, StringComparison.Ordinal))
                 return;
             if (!Directory.Exists(destDir))
                 Directory.CreateDirectory(destDir);
@@ -394,6 +394,8 @@ public static partial class RenamerHelper
                     CleanEmptyDirectories(srcDir, sourceFolder?.Path, logger);
                 }
             }
+
+            EnsureDirectoryCase(destDir, logger);
         }
         catch (DirectoryNotFoundException)
         { /* Directory was already cleaned up or moved concurrently by Shoko core */
@@ -520,6 +522,45 @@ public static partial class RenamerHelper
         catch (Exception ex)
         {
             logger.LogDebug(ex, "Shoko Renamer NN: Could not remove directory -> \"{Directory}\"", dir);
+        }
+    }
+
+    /// <summary>Ensures the destination directory on disk matches the exact casing of the expected path, performing a two-step rename if necessary on case-insensitive filesystems.</summary>
+    /// <param name="destDir">The expected destination directory path.</param>
+    /// <param name="logger">The logger instance.</param>
+    private static void EnsureDirectoryCase(string destDir, ILogger logger)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(destDir))
+                return;
+            string cleanDestDir = Path.GetFullPath(destDir);
+            string? parent = Path.GetDirectoryName(cleanDestDir);
+            if (string.IsNullOrEmpty(parent) || !Directory.Exists(parent))
+                return;
+
+            string expectedName = Path.GetFileName(cleanDestDir);
+            if (string.IsNullOrEmpty(expectedName))
+                return;
+
+            string? actualPath = Directory.EnumerateDirectories(parent).FirstOrDefault(d => Path.GetFileName(d).Equals(expectedName, StringComparison.OrdinalIgnoreCase));
+            if (actualPath == null)
+                return;
+
+            string actualName = Path.GetFileName(actualPath);
+            if (!string.Equals(actualName, expectedName, StringComparison.Ordinal))
+            {
+                string tempPath = Path.Combine(parent, $"{actualName}_case_temp_{Guid.NewGuid():N}");
+                string targetPath = Path.Combine(parent, expectedName);
+
+                Directory.Move(actualPath, tempPath);
+                Directory.Move(tempPath, targetPath);
+                logger.LogInformation("Shoko Renamer NN: Corrected folder casing -> \"{Old}\" to \"{New}\"", actualName, expectedName);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "Shoko Renamer NN: Could not update directory casing for -> \"{Directory}\"", destDir);
         }
     }
 

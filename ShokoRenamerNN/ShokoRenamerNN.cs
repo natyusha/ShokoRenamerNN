@@ -103,19 +103,29 @@ public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logg
                 string destFileName = context.RenameEnabled && !string.IsNullOrWhiteSpace(result.FileName) ? result.FileName : Path.GetFileName(srcPath);
                 string destPath = Path.Combine(destDir, destFileName);
 
-                if (!srcPath.Equals(destPath, StringComparison.OrdinalIgnoreCase))
+                if (!srcPath.Equals(destPath, StringComparison.Ordinal))
                     _ = Task.Run(async () =>
                     {
                         try
                         {
+                            bool isCaseOnly = srcPath.Equals(destPath, StringComparison.OrdinalIgnoreCase);
                             bool moved = false;
-                            for (int i = 0; i < 300; i++) // Allow up to 5 minutes for large files crossing filesystem boundaries
+
+                            if (isCaseOnly)
                             {
                                 await Task.Delay(1000).ConfigureAwait(false);
-                                if (File.Exists(destPath) && !File.Exists(srcPath))
+                                moved = true;
+                            }
+                            else
+                            {
+                                for (int i = 0; i < 300; i++)
                                 {
-                                    moved = true;
-                                    break;
+                                    await Task.Delay(1000).ConfigureAwait(false);
+                                    if (File.Exists(destPath) && !File.Exists(srcPath))
+                                    {
+                                        moved = true;
+                                        break;
+                                    }
                                 }
                             }
 
