@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.2.4",
+      "tag": "v1.2.4",
+      "source_revision": "3f443cc964a8bf9f44aa25c3613cff68ceafe7a7",
+      "released_at": "2026-11-05T20:21:29Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Added common external audio formats (FLAC, Opus, M4A, AAC, AC3, EAC3, DTS, MP3, etc.) to episode-level sidecar matching\r\n- Enforce directory casing updates on case insensitive filesystems\r\n- Formatted multi non-Other relations as ## (Rel1, Rel2)\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.2.3...v1.2.4",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.4/ShokoRenamerNN-v1.2.4_linux-arm64.zip",
+          "checksum": "sha256:a581dda6b00e39228d1f3b5c0f4cdb032693def9ea7caaa862d221dd9b9961ca"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.4/ShokoRenamerNN-v1.2.4_linux-x64.zip",
+          "checksum": "sha256:9e95402c07fc3445c625b8466ecfab0048c39e9280a13458b09c7baeec3d8a5e"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.4/ShokoRenamerNN-v1.2.4_win-x64.zip",
+          "checksum": "sha256:62be04b5479b4fdbe88d23e5cf492a74ca99d50479d9b94003c545906a3a76a7"
+        }
+      ]
+    },
+    {
       "version": "1.2.3",
       "tag": "v1.2.3",
       "source_revision": "be571fc67e3bbcaddaed4fad77da3db782c4f82e",
