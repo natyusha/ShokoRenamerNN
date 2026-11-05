@@ -66,10 +66,12 @@ public static partial class RenamerHelper
     /// <summary>Set of extensions considered as image files for series-level sidecars.</summary>
     private static readonly FrozenSet<string> s_imageExtensions = ((string[])[".bmp", ".gif", ".jpe", ".jpeg", ".jpg", ".png", ".tbn", ".tif", ".tiff", ".webp"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
+    // csharpier-ignore
     /// <summary>Set of extensions considered as episode-level sidecar files.</summary>
-    private static readonly FrozenSet<string> s_sidecarExtensions = ((string[])[".nfo", ".xml", ".chp", ".ass", ".srt", ".ssa", ".smi", ".sub", ".idx", ".vtt", ".sup"]).ToFrozenSet(
-        StringComparer.OrdinalIgnoreCase
-    );
+    private static readonly FrozenSet<string> s_sidecarExtensions = ((string[])[
+        ".nfo", ".xml", ".chp", ".ass", ".srt", ".ssa", ".smi", ".sub", ".idx", ".vtt", ".sup",
+        ".mka", ".flac", ".opus", ".m4a", ".aac", ".ac3", ".eac3", ".dts", ".dtshd", ".mp3", ".ogg", ".oga", ".thd", ".wav"
+    ]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Suffixes for episode-level attachment folders.</summary>
     private static readonly FrozenSet<string> s_attachFolderSuffixes = ((string[])["_attach", "_attachments"]).ToFrozenSet(StringComparer.OrdinalIgnoreCase);
