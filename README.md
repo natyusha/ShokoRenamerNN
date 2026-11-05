@@ -29,7 +29,7 @@ Installation can be completed via Shoko's WebUI (Recommended) or Manually. Both 
 
 ## Usage
 
-1. Navigate to `Utilities > File Rename` in Shoko's WebUI
+1. Navigate to `Utilities > Relocate Files` in Shoko's WebUI and click the settings cog under "File Rename"
 2. Click the `+` button to add a preset under "Preset Selection" and select "Shoko Renamer NN" as the provider
 3. Give the preset an appropriate name, then click `Save`
 4. With the new preset selected make sure to configure the "Main Folder Name" and "18 Restricted Folder Name"
@@ -48,8 +48,8 @@ Files will be organized and named as follows:
 - `title`: The preferred series title as reported by Shoko
   - This works best when configured as `x-main`: (the romanised version of an anime's original language official title)
 - `epNumber`: Padded episode numbers with range formatting, relation indicators, or single-entry titles
-  - Relation indicators will be appended in parenthesis like so: `O1 (E01)`
-  - Single-entry titles will replace the episode number like so: `(Complete Movie)`
+  - Relation indicators will be appended in parenthesis: `O1 (E01)`, `01 (S01)`
+  - Single-entry titles will replace the episode number: `(Complete Movie)`
 - `fileTags`: Optional preserved release tags from the source file
   - Release tags include things like: `[uncen]` or `[raw]`
 - `extension`: The file extension

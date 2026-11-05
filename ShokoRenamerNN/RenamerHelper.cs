@@ -31,7 +31,7 @@ public static partial class RenamerHelper
     private static partial Regex RelationOtherRegex();
 
     /// <summary>Regex matching episode number relations for standard non-Episode types to format as ## (X##).</summary>
-    [GeneratedRegex(@"^([0-9 -]+)\s+([CSTPU]\d+(?:-\d+)?)$")]
+    [GeneratedRegex(@"^([0-9 -]+)\s+([SCTPU]\d+(?:-\d+)?)$")]
     private static partial Regex RelationStandardRegex();
 
     /// <summary>Regex for condensing multiple spaces into a single space.</summary>
@@ -202,12 +202,12 @@ public static partial class RenamerHelper
         {
             string prefix = group.Key switch
             {
+                EpisodeType.Episode => "",
                 EpisodeType.Special => "S",
                 EpisodeType.Credits => "C",
-                EpisodeType.Other => "O",
-                EpisodeType.Parody => "P",
                 EpisodeType.Trailer => "T",
-                EpisodeType.Episode => "",
+                EpisodeType.Parody => "P",
+                EpisodeType.Other => "O",
                 _ => "U",
             };
             var nums = group.Select(e => e.EpisodeNumber).ToList();
@@ -242,16 +242,14 @@ public static partial class RenamerHelper
         string folderName = config.MoveCommonPrefixes ? CommonTitlePrefixesRegex().Replace(title, "$2 — $1") : title;
 
         if (config.ReplaceInvalidCharacters)
-        {
-            if (folderName.EndsWith("......"))
-                folderName = folderName[..^6] + "……";
-            else if (folderName.EndsWith("..."))
-                folderName = folderName[..^3] + "…";
-            else if (folderName.EndsWith(".."))
-                folderName = folderName[..^2] + "‥";
-            else if (folderName.EndsWith("."))
-                folderName = folderName[..^1] + "․";
-        }
+            folderName = folderName switch
+            {
+                _ when folderName.EndsWith("......") => folderName[..^6] + "……",
+                _ when folderName.EndsWith("...") => folderName[..^3] + "…",
+                _ when folderName.EndsWith("..") => folderName[..^2] + "‥",
+                _ when folderName.EndsWith(".") => folderName[..^1] + "․",
+                _ => folderName,
+            };
 
         return folderName.Trim();
     }
@@ -338,10 +336,13 @@ public static partial class RenamerHelper
             if (!Directory.Exists(destDir))
                 Directory.CreateDirectory(destDir);
 
+            // Local helper to rapidly identify source and destination paths to avoid evaluating them repeatedly
+            bool IsSrcOrDest(string p) => Path.GetFullPath(p) is string f && (f.Equals(cleanSrcPath, cmp) || f.Equals(cleanDestPath, cmp));
+
             // Episode-level sidecars and attachment folders (safe to move out of any folder type)
             foreach (var entry in Directory.EnumerateFileSystemEntries(srcDir, srcBase + "*"))
             {
-                if (Path.GetFullPath(entry).Equals(cleanSrcPath, cmp) || Path.GetFullPath(entry).Equals(cleanDestPath, cmp))
+                if (IsSrcOrDest(entry))
                     continue;
 
                 string name = Path.GetFileName(entry);
@@ -369,9 +370,7 @@ public static partial class RenamerHelper
             bool canMoveLoose = !srcDir.Equals(destDir, cmp) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
             if (canMoveLoose && Directory.Exists(srcDir))
             {
-                bool hasOtherActiveVideos = Directory
-                    .EnumerateFiles(srcDir)
-                    .Any(f => videoService.IsAllowedVideoExtension(f) && !Path.GetFullPath(f).Equals(cleanSrcPath, cmp) && !Path.GetFullPath(f).Equals(cleanDestPath, cmp) && !IsIgnoredVideo(f, videoService));
+                bool hasOtherActiveVideos = Directory.EnumerateFiles(srcDir).Any(f => videoService.IsAllowedVideoExtension(f) && !IsSrcOrDest(f) && !IsIgnoredVideo(f, videoService));
 
                 if (!hasOtherActiveVideos)
                 {
@@ -387,9 +386,7 @@ public static partial class RenamerHelper
 
                     foreach (var file in Directory.EnumerateFiles(srcDir))
                     {
-                        if (Path.GetFullPath(file).Equals(cleanSrcPath, cmp) || Path.GetFullPath(file).Equals(cleanDestPath, cmp))
-                            continue;
-                        if (videoService.IsAllowedVideoExtension(file) && !IsIgnoredVideo(file, videoService))
+                        if (IsSrcOrDest(file) || (videoService.IsAllowedVideoExtension(file) && !IsIgnoredVideo(file, videoService)))
                             continue;
 
                         string target = Path.Combine(destDir, Path.GetFileName(file));
@@ -483,7 +480,6 @@ public static partial class RenamerHelper
 
             // Safely clean up the source directory structure (bottom-up), leaving behind any skipped files
             foreach (var dir in Directory.EnumerateDirectories(src, "*", options).OrderByDescending(d => d.Length))
-            {
                 try
                 {
                     if (!Directory.EnumerateFileSystemEntries(dir).Any())
@@ -492,7 +488,7 @@ public static partial class RenamerHelper
                 catch
                 { /* Ignore */
                 }
-            }
+
             try
             {
                 if (!Directory.EnumerateFileSystemEntries(src).Any())
