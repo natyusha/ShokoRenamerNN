@@ -48,7 +48,7 @@ Files will be organized and named as follows:
 - `title`: The preferred series title as reported by Shoko
   - This works best when configured as `x-main`: (the romanised version of an anime's original language official title)
 - `epNumber`: Padded episode numbers with range formatting, relation indicators, or single-entry titles
-  - Relation indicators will be appended in parenthesis: `O1 (E01)`, `01 (S01)`
+  - Relation indicators will be appended in parenthesis: `O1 (E01)`, `01 (S01)`, `01 (S01, T01)`
   - Single-entry titles will replace the episode number: `(Complete Movie)`
 - `fileTags`: Optional preserved release tags from the source file
   - Release tags include things like: `[uncen]` or `[raw]`

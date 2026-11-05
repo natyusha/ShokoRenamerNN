@@ -26,14 +26,6 @@ public static partial class RenamerHelper
     [GeneratedRegex(@"^(Gekijou Henshuuban |Gekijou Soushuuhen |Gekijou Remix Ban |Gekijou Tanpen |Gekijouban 3D |Gekijouban |Eiga |OVA )(.+)$", RegexOptions.IgnoreCase)]
     private static partial Regex CommonTitlePrefixesRegex();
 
-    /// <summary>Regex matching episode number relations for Other episodes to format as O## (E##).</summary>
-    [GeneratedRegex(@"^([0-9 -]+)\s+O(\d+(?:-\d+)?)$")]
-    private static partial Regex RelationOtherRegex();
-
-    /// <summary>Regex matching episode number relations for standard non-Episode types to format as ## (X##).</summary>
-    [GeneratedRegex(@"^([0-9 -]+)\s+([SCTPU]\d+(?:-\d+)?)$")]
-    private static partial Regex RelationStandardRegex();
-
     /// <summary>Regex for condensing multiple spaces into a single space.</summary>
     [GeneratedRegex(@"\s{2,}")]
     private static partial Regex CondenseSpacesRegex();
@@ -219,9 +211,12 @@ public static partial class RenamerHelper
                 ranges.Add($"{prefix}{nums[0].ToString(format)}-{nums[^1].ToString(format)}");
         }
 
-        string epNumber = string.Join(" ", ranges);
-        epNumber = RelationOtherRegex().Replace(epNumber, "O$2 (E$1)");
-        epNumber = RelationStandardRegex().Replace(epNumber, "$1 ($2)");
+        string epNumber =
+            ranges.Count > 1 && sortedEps[0].Type == EpisodeType.Episode
+                ? ranges.Count == 2 && sortedEps[^1].Type == EpisodeType.Other
+                    ? $"{ranges[1]} (E{ranges[0]})"
+                    : $"{ranges[0]} ({string.Join(", ", ranges.Skip(1))})"
+                : string.Join(" ", ranges);
 
         if (config.RenameAmbiguousEpisodes)
         {
