@@ -13,6 +13,34 @@
   "icon_url": "https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-icon.png",
   "releases": [
     {
+      "version": "1.2.3",
+      "tag": "v1.2.3",
+      "source_revision": "be571fc67e3bbcaddaed4fad77da3db782c4f82e",
+      "released_at": "2026-11-05T04:50:44Z",
+      "channel": "Stable",
+      "release_notes": "**Changes:**\r\n- Expanded episode relation formatting regex to cover Credits, Parodies, Trailers, and Unknown types natively\r\n- Added a relation count guard to ambiguous episode renaming to prevent name collisions when episode relations are present\r\n\r\n**Full Changelog**: https://github.com/natyusha/ShokoRenamerNN/compare/v1.2.2...v1.2.3",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.3/ShokoRenamerNN-v1.2.3_linux-arm64.zip",
+          "checksum": "sha256:445ac265cf5078a1a96300e2ba226e43d13f6494ba4180472872105b1292d4dd"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.3/ShokoRenamerNN-v1.2.3_linux-x64.zip",
+          "checksum": "sha256:c8cc61e1ace0b0992b44900495c930da819ef395dfdad0499547a8199e64b6bd"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/natyusha/ShokoRenamerNN/releases/download/v1.2.3/ShokoRenamerNN-v1.2.3_win-x64.zip",
+          "checksum": "sha256:29d8d6a41d8794c93f5d664845eaee5999d43a0efb6c27d046e78af0f6a9d359"
+        }
+      ]
+    },
+    {
       "version": "1.2.2",
       "tag": "v1.2.2",
       "source_revision": "f027af3f42599abfc688d912b545ac348f2775c4",
