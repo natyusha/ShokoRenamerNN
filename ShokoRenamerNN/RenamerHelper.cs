@@ -364,7 +364,8 @@ public static partial class RenamerHelper
             }
 
             // Loose files and loose folders (only moved when relocating out of an existing destination managed folder)
-            bool canMoveLoose = !srcDir.Equals(destDir, cmp) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
+            bool canMoveLoose =
+                !srcDir.Equals(destDir, StringComparison.Ordinal) && sourceFolder is { } fld && fld.DropFolderType.HasFlag(DropFolderType.Destination) && !fld.DropFolderType.HasFlag(DropFolderType.Source);
             if (canMoveLoose && Directory.Exists(srcDir))
             {
                 bool hasOtherActiveVideos = Directory.EnumerateFiles(srcDir).Any(f => videoService.IsAllowedVideoExtension(f) && !IsSrcOrDest(f) && !IsIgnoredVideo(f, videoService));
@@ -525,7 +526,7 @@ public static partial class RenamerHelper
         }
     }
 
-    /// <summary>Ensures the destination directory on disk matches the exact casing of the expected path, performing a two-step rename if necessary on case-insensitive filesystems.</summary>
+    /// <summary>Ensures the destination directory on disk matches the exact casing of the expected path, merging on case-sensitive or two-step renaming on case-insensitive filesystems.</summary>
     /// <param name="destDir">The expected destination directory path.</param>
     /// <param name="logger">The logger instance.</param>
     private static void EnsureDirectoryCase(string destDir, ILogger logger)
@@ -543,16 +544,30 @@ public static partial class RenamerHelper
             if (string.IsNullOrEmpty(expectedName))
                 return;
 
-            string? actualPath = Directory.EnumerateDirectories(parent).FirstOrDefault(d => Path.GetFileName(d).Equals(expectedName, StringComparison.OrdinalIgnoreCase));
-            if (actualPath == null)
+            var matchingDirs = Directory.EnumerateDirectories(parent).Where(d => Path.GetFileName(d).Equals(expectedName, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (matchingDirs.Count == 0)
                 return;
 
+            string targetPath = Path.Combine(parent, expectedName);
+
+            // On case-sensitive systems (e.g. Linux), both old and new casing directories can exist at once; merge old into new
+            if (matchingDirs.Count > 1)
+            {
+                var oldDir = matchingDirs.FirstOrDefault(d => !string.Equals(Path.GetFileName(d), expectedName, StringComparison.Ordinal));
+                if (oldDir != null)
+                {
+                    MoveDirectorySafely(oldDir, targetPath, logger);
+                    logger.LogInformation("Shoko Renamer NN: Merged folder casing -> \"{Old}\" into \"{New}\"", Path.GetFileName(oldDir), expectedName);
+                }
+                return;
+            }
+
+            // On case-insensitive systems (e.g. Windows/macOS), only one physical directory exists; perform a two-step rename to enforce casing
+            string actualPath = matchingDirs[0];
             string actualName = Path.GetFileName(actualPath);
             if (!string.Equals(actualName, expectedName, StringComparison.Ordinal))
             {
                 string tempPath = Path.Combine(parent, $"{actualName}_case_temp_{Guid.NewGuid():N}");
-                string targetPath = Path.Combine(parent, expectedName);
-
                 Directory.Move(actualPath, tempPath);
                 Directory.Move(tempPath, targetPath);
                 logger.LogInformation("Shoko Renamer NN: Corrected folder casing -> \"{Old}\" to \"{New}\"", actualName, expectedName);
