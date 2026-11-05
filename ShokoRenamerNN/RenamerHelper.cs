@@ -30,9 +30,9 @@ public static partial class RenamerHelper
     [GeneratedRegex(@"^([0-9 -]+)\s+O(\d+(?:-\d+)?)$")]
     private static partial Regex RelationOtherRegex();
 
-    /// <summary>Regex matching episode number relations for Special episodes to format as ## (S##).</summary>
-    [GeneratedRegex(@"^([0-9 -]+)\s+S(\d+(?:-\d+)?)$")]
-    private static partial Regex RelationSpecialRegex();
+    /// <summary>Regex matching episode number relations for standard non-Episode types to format as ## (X##).</summary>
+    [GeneratedRegex(@"^([0-9 -]+)\s+([CSTPU]\d+(?:-\d+)?)$")]
+    private static partial Regex RelationStandardRegex();
 
     /// <summary>Regex for condensing multiple spaces into a single space.</summary>
     [GeneratedRegex(@"\s{2,}")]
@@ -219,12 +219,12 @@ public static partial class RenamerHelper
 
         string epNumber = string.Join(" ", ranges);
         epNumber = RelationOtherRegex().Replace(epNumber, "O$2 (E$1)");
-        epNumber = RelationSpecialRegex().Replace(epNumber, "$1 (S$2)");
+        epNumber = RelationStandardRegex().Replace(epNumber, "$1 ($2)");
 
         if (config.RenameAmbiguousEpisodes)
         {
             string epName = primaryEp.Titles.FirstOrDefault(t => t.LanguageCode.Equals("en", StringComparison.OrdinalIgnoreCase))?.Value ?? "";
-            if (primaryEp.EpisodeNumber == 1 && s_singleEntryTitles.Contains(epName))
+            if (primaryEp.EpisodeNumber == 1 && sortedEps.Count == 1 && s_singleEntryTitles.Contains(epName))
                 epNumber = $"({epName})";
             if (primaryEp.Type == EpisodeType.Episode && sortedEps.Count > 1 && epName.Contains("Part 1 of", StringComparison.OrdinalIgnoreCase))
                 epNumber = $"{sortedEps[0].EpisodeNumber - 1:D2} (E{sortedEps[1].EpisodeNumber})";
