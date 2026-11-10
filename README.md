@@ -17,8 +17,8 @@ Installation can be completed via Shoko's WebUI (Recommended) or Manually. Both 
 - **WebUI** (Recommended)
   - Open Shoko's WebUI and navigate to: `Settings > Plugin Management > Repositories`
   - Click `Add Repository` and configure the following:
-    - Name: `NN Plugins`
-    - Manifest URL: `https://raw.githubusercontent.com/natyusha/ShokoPluginManifest/master/manifest.json`
+    - Name: `Shoko Renamer NN`
+    - Manifest URL: `https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/manifest.json`
   - Go to `Settings > Plugin Management > Browse` and find "Shoko Renamer NN"
   - Click `Install`
 - **Manual**
