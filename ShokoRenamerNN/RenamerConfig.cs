@@ -11,6 +11,8 @@ namespace ShokoRenamerNN;
 /// <summary>Configuration settings for Shoko Renamer NN.</summary>
 public class RenamerConfig : IRelocationProviderConfiguration, IConfigurationWithNewFactory<RenamerConfig>
 {
+    #region Config Properties
+
     /// <summary>The default destination folder for anime.</summary>
     [Display(Name = "Main Folder Name", Description = "The default destination folder for anime.")]
     [DefaultValue("Anime")]
@@ -56,6 +58,15 @@ public class RenamerConfig : IRelocationProviderConfiguration, IConfigurationWit
         + "2840;2841,Akahori Gedou Hour Rabuge\n"
         + "147453,Toriko (2011),099\n";
 
+    #endregion
+
+    #region Factory
+
     /// <summary>Creates a new default instance of the settings.</summary>
+    /// <param name="configurationService">The Shoko configuration service.</param>
+    /// <param name="pluginManager">The Shoko plugin manager.</param>
+    /// <returns>A new default <see cref="RenamerConfig"/> instance.</returns>
     public static RenamerConfig New(IConfigurationService configurationService, IPluginManager pluginManager) => new();
+
+    #endregion
 }

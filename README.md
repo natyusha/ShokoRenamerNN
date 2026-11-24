@@ -1,6 +1,6 @@
 <!-- prettier-ignore-start -->
 
-![Shoko Renamer NN Logo](https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/ShokoRenamerNN/Assets/shoko-renamer-nn-logo-small.png "Shoko Renamer NN")  
+![Shoko Renamer NN Logo](https://raw.githubusercontent.com/natyusha/ShokoRenamerNN/master/Assets/shoko-renamer-nn-logo-small.png "Shoko Renamer NN")  
 [![Discord](https://img.shields.io/discord/96234011612958720?logo=discord&logoColor=fff&label=Discord&color=5865F2 "Shoko Discord")](https://discord.gg/shokoanime)
 [![Shoko Docs](https://img.shields.io/badge/VitePress-Shoko_Docs-4E7CF5?logo=vitepress&logoColor=fff)](https://docs.shokoanime.com/)
 [![GitHub Latest](https://img.shields.io/github/v/tag/natyusha/ShokoRenamerNN?label=Latest&logo=github&logoColor=fff)](https://github.com/natyusha/ShokoRenamerNN/releases/latest)
