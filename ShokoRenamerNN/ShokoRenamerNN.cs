@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Shoko.Abstractions.FileSystem.Services;
 using Shoko.Abstractions.Metadata.Shoko;
 using Shoko.Abstractions.Plugin;
 using Shoko.Abstractions.Video;
@@ -40,8 +41,9 @@ public class Plugin : IPlugin
 
 /// <summary>A C# relocation provider acting as a direct replacement for LuaRenamer scripts.</summary>
 /// <param name="videoService">Shoko video service for extension checking.</param>
+/// <param name="fileSystem">Shoko filesystem service for watcher-safe file and directory operations.</param>
 /// <param name="logger">The logger instance.</param>
-public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logger) : IRelocationProvider<RenamerConfig>
+public class ShokoRenamer(IVideoService videoService, IFileSystem fileSystem, ILogger<ShokoRenamer> logger) : IRelocationProvider<RenamerConfig>
 {
     #region Provider Metadata
 
@@ -134,7 +136,7 @@ public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logg
                                 for (int attempt = 0; attempt < 300; attempt++) // Allow up to 5 minutes for large files crossing filesystem boundaries
                                 {
                                     await Task.Delay(1000).ConfigureAwait(false);
-                                    if (File.Exists(destinationPath) && !File.Exists(sourcePath))
+                                    if (fileSystem.FileExists(destinationPath) && !fileSystem.FileExists(sourcePath))
                                     {
                                         moved = true;
                                         break;
@@ -142,7 +144,7 @@ public class ShokoRenamer(IVideoService videoService, ILogger<ShokoRenamer> logg
                                 }
 
                             if (moved)
-                                RenamerHelper.RelocateSidecars(sourcePath, destinationPath, sourceFolder, videoService, logger);
+                                RenamerHelper.RelocateSidecars(sourcePath, destinationPath, sourceFolder, videoService, fileSystem, logger);
                         }
                         catch (DirectoryNotFoundException)
                         { /* Directory was already cleaned up by Shoko or a concurrent job */
